@@ -86,6 +86,7 @@ class Demo extends Component {
   }
   clickItem = (item) => {
     let { list } = this.state
+    if(list.length === 1) return;
     list = this.mapList(list, item.id)
     const selectedList = this.eachList(list)
     this.setState({
@@ -193,7 +194,7 @@ class Demo extends Component {
   delelteItem = (list, ids) => {
     let indexes = []
     ids.splice(0, 1)
-    ids.map(id => {
+    ids.forEach(id => {
       let index = list.findIndex(item => item.id === id)
       indexes.push(index)
     }) 
@@ -257,12 +258,16 @@ class Demo extends Component {
         disorder: false,
         list: [...result]
       }
-    }
+    } 
+    return result;
+  }
+  // 点击格式化
+  format = () => {
+    const result = this.formatList()
     this.setState({
       result,
     })
   }
-
   // 删除key value
   deleteKey = (item = {}) => {
     if (typeof item.text !== 'string') {
@@ -295,6 +300,11 @@ class Demo extends Component {
     list[index] = item
     this.setState({ list })
   }
+  submit = () => { 
+    const result = this.formatList()
+    console.log(result);
+    
+  }
   render() {
     const { list, selectedList, result } = this.state
     const selectedLen = selectedList.length
@@ -326,7 +336,8 @@ class Demo extends Component {
           }
         </div>
         <div className="action-btns">
-          <a onClick={() => this.formatList([], this.state.list)}>格式化数据</a>
+          <span className='btn' onClick={() => this.format()}>格式化数据</span>
+          <span className='btn' onClick={() => this.submit()}>提交</span>
         </div>
         <pre className='content'>
           <pre>
