@@ -219,6 +219,10 @@ class Demo extends Component {
   clickSplit = (e, splitObj) => {
     e.stopPropagation()
     let { list } = this.state
+    list = list.map(item => {
+      item.selected = false
+      return {...item}
+    })
     const index = list.findIndex(item => item.id === splitObj.id)
     if (splitObj.format.length > 2) {
       const left = this.split(splitObj)
