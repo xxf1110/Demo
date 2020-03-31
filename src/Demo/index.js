@@ -245,11 +245,9 @@ class Demo extends Component {
   formatList = () => {
     let { list } = this.state
     let result = JSON.parse(JSON.stringify(list)) 
-    result.forEach(item => {
-      item = this.deleteKey(item)
-      if (Array.isArray(item.format)) { 
-        item.format = this.extend(item.format)
-      }
+    result.map(item => {
+      item = this.deleteKey(item) 
+      return item
     }) 
     if(result.length === 1){
       result = result.pop()
