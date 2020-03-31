@@ -209,7 +209,8 @@ class Demo extends Component {
   }
 
   // 双击拆分内层
-  onDoubleClick = (e, ) => {
+  onDoubleClick = (e) => {
+    e.stopPropagation() 
     const { list } = this.state
     let id = $(e.target).parents('.merge').last().attr('selfid') * 1
     console.log('id', id);
@@ -305,24 +306,23 @@ class Demo extends Component {
     }
     return list;
   }
-  // 双击拆分内层
-  splitCore = (splitObj, parent) => {
-    splitObj = {...splitObj}
-    parent = {...parent} 
-    console.log(splitObj, parent); 
-    let index = parent.format.findIndex(item => item.id === splitObj.id) 
-    console.log(index)
-    if (splitObj.format.length > 2) { 
-      // const left = [...splitObj.left]
-      // parent = parent.format.splice(index, 1, ...left)
+  // 双击拆分内层 合并parent
+  splitCore = (splitObj, parent) => {   
+    let index = parent.format.findIndex(item => item.id === splitObj.id)   
+    splitObj = parent.format.splice(index, 1, {})[0] 
+    if (splitObj.format.length > 2) {  
+      const left = splitObj.left 
+      parent.format.splice(index, 1, ...left)
     } else {
       const left = {...splitObj.left}
-      const right = {...splitObj.right}
-      console.log([left, right]) 
-      // 删除有引用问题
-      // parent.format.splice(index, 1, left, right) 
-      console.log(parent)
-    }  
+      const right = {...splitObj.right} 
+      parent.format.splice(index, 1, left, right)   
+    } 
+    // 合并parent 插入原list 更新
+    console.log(parent)
+
+
+
   }
   // 双击拆分插入
 
