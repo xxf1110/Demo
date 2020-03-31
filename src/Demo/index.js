@@ -4,22 +4,22 @@ import ClipboardJS from "clipboard";
 import $ from 'jquery'
 
 function select(o, fn) {
-	window.targetStart = document
-	o.onmousedown = function(e) {
-        var event = window.event || e;
-        var target1 = event.srcElement ? event.srcElement : event.target;
-		    window.targetStart = target1
+  window.targetStart = document
+  o.onmousedown = function (e) {
+    var event = window.event || e;
+    var target1 = event.srcElement ? event.srcElement : event.target;
+    window.targetStart = target1
+  }
+  o.onmouseup = function (e) {
+    var event = window.event || e;
+    var target = event.srcElement ? event.srcElement : event.target;
+    var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
+    if (sText != "") {
+      //将参数传入回调函数fn
+      fn(sText, target);
     }
-    o.onmouseup = function(e) {
-        var event = window.event || e;
-        var target = event.srcElement ? event.srcElement : event.target;
-        var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
-        if (sText != "") {
-            //将参数传入回调函数fn
-            fn(sText, target);
-        }
-        
-    }
+
+  }
 }
 
 class Demo extends Component {
@@ -102,28 +102,42 @@ class Demo extends Component {
       ],
       selectedList: [], // 选中的列表
       result: {}, // 格式化的数据 
+      desc: '',
+      showModal: false
     }
   }
+  timer = null
   componentDidMount() {
     select(document, this.selectText);
-
     this.clipboard = new ClipboardJS('.copy');
-    this.clipboard.on('success', (e) => { 
-      console.info('Text:', e.text);  
+    this.clipboard.on('success', (e) => {
+      this.openModal('拷贝成功')
       e.clearSelection();
-    });
-
+      
+    }); 
     this.clipboard.on('error', (e) => { 
-      console.error('Trigger:', e.trigger);
+      this.openModal('拷贝失败')
     });
+  }
+  openModal = (desc) => {
+    this.setState({
+      desc,
+      showModal: true,
+    })
+    this.timer = setTimeout(() => {
+      this.setState({
+        showModal: false,
+      })
+      clearTimeout(this.timer)
+    }, 2000)
   }
   selectText = (txt, tar) => {
     let startItem = $(window.targetStart).parents('.merge').last()
     let endItem = $(tar).parents('.merge').last()
-    startItem = startItem.length?startItem.prevObject[0]:startItem.prevObject.prevObject[0]
-    endItem = endItem.length?endItem.prevObject[0]:endItem.prevObject.prevObject[0]
+    startItem = startItem.length ? startItem.prevObject[0] : startItem.prevObject.prevObject[0]
+    endItem = endItem.length ? endItem.prevObject[0] : endItem.prevObject.prevObject[0]
     let { list } = this.state
-    list = list.filter(item=>item.id >= $(startItem).attr('selfid') && item.id <= $(endItem).attr('selfid'))
+    list = list.filter(item => item.id >= $(startItem).attr('selfid') && item.id <= $(endItem).attr('selfid'))
     list.map(this.clickItem)
     this.mergeSelected()
   }
@@ -139,13 +153,12 @@ class Demo extends Component {
   }
   // 点击合并 
   mergeSelected = (e) => {
-    if(e)e.stopPropagation();
+    if (e) e.stopPropagation();
     let { list, selectedList } = this.state
     if (selectedList.length >= 2) {
       let mergeObj = this.merge(selectedList)
       list = this.replace(list, mergeObj)
-      let ids = selectedList.map(item => item.id)
-      // ids.splice(0, 1)
+      let ids = selectedList.map(item => item.id) 
       list = this.delelteItem(list, ids)
     }
     this.setState({
@@ -252,7 +265,7 @@ class Demo extends Component {
     let { list } = this.state
     list = list.map(item => {
       item.selected = false
-      return {...item}
+      return { ...item }
     })
     const index = list.findIndex(item => item.id === splitObj.id)
     if (splitObj.format.length > 2) {
@@ -308,7 +321,8 @@ class Demo extends Component {
   }
   // 点击格式化
   format = () => {
-    const result = this.formatList()
+    const result = this.formatList() 
+    this.openModal('已格式化数据')
     this.setState({
       result,
     })
@@ -351,7 +365,7 @@ class Demo extends Component {
 
   }
   render() {
-    const { list, selectedList, result } = this.state
+    const { list, selectedList, result, desc, showModal } = this.state
     const selectedLen = selectedList.length
     return (
       <div className='demo'>
@@ -367,7 +381,7 @@ class Demo extends Component {
                 onMouseLeave={() => this.onMouseLeave(item)}
                 onClick={() => this.clickItem(item)}
               >
-                  {item.text}
+                {item.text}
                 {
                   selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
                 }
@@ -385,11 +399,19 @@ class Demo extends Component {
           <span className='btn' onClick={() => this.format()}>格式化数据</span>
           <span className='btn copy' onClick={() => this.copy()} data-clipboard-text={JSON.stringify(result, (k, v) => v, 4)}>拷贝</span>
         </div>
-        <pre className='content'>
+        <div className='content'>
           <pre>
             {JSON.stringify(result, (k, v) => v, 4)}
           </pre>
-        </pre>
+        </div>
+        {
+          showModal && (
+            <div className='modal'>
+              <span>{desc}</span>
+            </div>
+          )
+        }
+
       </div>
     );
   }
