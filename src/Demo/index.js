@@ -212,48 +212,43 @@ class Demo extends Component {
   onDoubleClick = (e, ) => {
     const { list } = this.state
     let id = $(e.target).parents('.merge').last().attr('selfid') * 1
-    console.log(id);
-    // let id2 = $(e.target).attr('selfid')
-    // let id = (id2 || id1) * 1
+    console.log('id', id);
+    let splitId = $(e.target).parent('.merge').attr('selfid') * 1
+    console.log('splitId', splitId)
     let zIndex = ($(e.target).attr('zindex') || $(e.target).parent('.merge').attr('zindex')) * 1
-    // console.log('id', id);
-    console.log('zIndex', zIndex);
-
+    console.log('zIndex', zIndex); 
 
     let prev = list.find(item => item.id === id)
-    let current = {}
-    for (let i = 0; i < prev.zIndex; i++) {
-      if (prev.format) {
-        prev.format.map((item, index) => {
-          if (item.zIndex == zIndex) {
-            current = prev.format[index]
+    let currentArr = []
+    let parentArr = [prev]
+    const run = (arr = [], zIndex, res = []) => {
+      if(!arr.length) return arr;
+      let filters = arr.filter(item => item.zIndex === zIndex)
+      if(filters.length){
+        return res.concat(...filters)
+      }else{ 
+        res = arr.map(item => {
+          if(item.format){
+            return run(item.format, zIndex, res)
           }
-        })
+          return [];
+        })  
+        return res;
       }
     }
-
-    let prevParent = list.find(item => item.id === id)
-    let parent = {}
-    for (let i = 0; i < prevParent.zIndex; i++) {
-      if (prevParent.format) {
-        prevParent.format.map((item, index) => {
-          if (item.zIndex == (zIndex + 1)) {
-            parent = prevParent.format[index]
-          }
-        })
-      }
+    if(prev.format){
+      currentArr = run(prev.format, zIndex, []) 
     }
-    // while (parent.zIndex !== (zIndex + 1)) {
-    //   if (!parent.format) {
-    //     parent = prevParent
-    //     break;
-    //   } 
-    //   parent = parent.format.find(item => item.id === id) 
-    //   prevParent = parent
-    // }  
-    console.log(current, parent);
-
-    // this.splitCore(prev, parent)
+    if(prev.zIndex !== zIndex + 1){
+      parentArr = run(prev.format, zIndex + 1, [])
+    }
+    currentArr = currentArr.flat(Infinity) 
+    parentArr = parentArr.flat(Infinity) 
+    let current = currentArr.find(item => item.id === splitId)
+    let parent = parentArr[0]
+    // console.log(current)
+    // console.log(parent)   
+    this.splitCore(current, parent)
   }
   // 合并
   merge = (selectedList) => {
@@ -265,7 +260,7 @@ class Demo extends Component {
       format: [...selectedList],
       selected: false,
       isMerged: true,
-      zIndex,
+      zIndex, 
       text: (
         <div className='merge' selfid={selectedList[0].id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
           {
@@ -312,20 +307,25 @@ class Demo extends Component {
   }
   // 双击拆分内层
   splitCore = (splitObj, parent) => {
-    console.log(parent.format);
-    let index = parent.format.findIndex(item => item.id === splitObj.id)
-    console.log(index);
-    if (splitObj.format.length > 2) {
-      const left = this.split(splitObj)
-      parent = this.insetParent(parent, left, null, index)
+    splitObj = {...splitObj}
+    parent = {...parent} 
+    console.log(splitObj, parent); 
+    let index = parent.format.findIndex(item => item.id === splitObj.id) 
+    console.log(index)
+    if (splitObj.format.length > 2) { 
+      // const left = [...splitObj.left]
+      // parent = parent.format.splice(index, 1, ...left)
     } else {
-      const [left, right] = this.split(splitObj)
-      parent = this.insetParent(parent, left, right, index)
-    }
-
-    // console.log(parent);
+      const left = {...splitObj.left}
+      const right = {...splitObj.right}
+      console.log([left, right]) 
+      // 删除有引用问题
+      // parent.format.splice(index, 1, left, right) 
+      console.log(parent)
+    }  
   }
-  // 双加拆分插入
+  // 双击拆分插入
+
   // 拆分后插入
   insetParent = (parent, left, right, index) => {
     if (left.length > 2) {
