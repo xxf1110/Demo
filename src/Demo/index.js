@@ -1,6 +1,26 @@
 import React, { Component } from 'react';
 import './index.scss'
 import ClipboardJS from "clipboard";
+import $ from 'jquery'
+
+function select(o, fn) {
+	window.targetStart = document
+	o.onmousedown = function(e) {
+        var event = window.event || e;
+        var target1 = event.srcElement ? event.srcElement : event.target;
+		    window.targetStart = target1
+    }
+    o.onmouseup = function(e) {
+        var event = window.event || e;
+        var target = event.srcElement ? event.srcElement : event.target;
+        var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
+        if (sText != "") {
+            //将参数传入回调函数fn
+            fn(sText, target);
+        }
+        
+    }
+}
 
 class Demo extends Component {
   constructor(props) {
@@ -85,6 +105,8 @@ class Demo extends Component {
     }
   }
   componentDidMount() {
+    select(document, this.selectText);
+
     this.clipboard = new ClipboardJS('.copy');
     this.clipboard.on('success', (e) => { 
       console.info('Text:', e.text);  
@@ -95,7 +117,16 @@ class Demo extends Component {
       console.error('Trigger:', e.trigger);
     });
   }
-
+  selectText = (txt, tar) => {
+    let startItem = $(window.targetStart).parents('.merge').last()
+    let endItem = $(tar).parents('.merge').last()
+    startItem = startItem.length?startItem.prevObject[0]:startItem.prevObject.prevObject[0]
+    endItem = endItem.length?endItem.prevObject[0]:endItem.prevObject.prevObject[0]
+    let { list } = this.state
+    list = list.filter(item=>item.id >= $(startItem).attr('selfid') && item.id <= $(endItem).attr('selfid'))
+    list.map(this.clickItem)
+    this.mergeSelected()
+  }
   clickItem = (item) => {
     let { list } = this.state
     if (list.length === 1) return;
@@ -108,7 +139,7 @@ class Demo extends Component {
   }
   // 点击合并 
   mergeSelected = (e) => {
-    e.stopPropagation()
+    if(e)e.stopPropagation();
     let { list, selectedList } = this.state
     if (selectedList.length >= 2) {
       let mergeObj = this.merge(selectedList)
@@ -172,7 +203,7 @@ class Demo extends Component {
       selected: false,
       isMerged: true,
       text: (
-        <div className='merge'>
+        <div className='merge' selfid={selectedList[0].id}>
           {
             selectedList.map((item, index) => (
               <div className='item' key={index} >{item.text}</div>
@@ -325,13 +356,14 @@ class Demo extends Component {
             list.map(item => (
               <div
                 key={item.id}
+                selfid={item.id}
                 className={`item ${item.selected ? 'selected' : ''}`}
                 onMouseOver={() => this.onMouseOver(item)}
                 onMouseEnter={() => this.onMouseEnter(item)}
                 onMouseLeave={() => this.onMouseLeave(item)}
                 onClick={() => this.clickItem(item)}
               >
-                {item.text}
+                  {item.text}
                 {
                   selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
                 }
