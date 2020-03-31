@@ -1,9 +1,10 @@
 .demo{
-  width: 1400px;
-  margin: 40px auto 0;
+  width: 80%;
+  margin: 20px auto 0;
   .list{
-    display: flex;
-    align-items: center;
+    display: flex; 
+    min-height: 200px;
+    align-items: center;  
     justify-content: flex-start;
     flex-wrap: wrap;
     .merge{
@@ -14,9 +15,12 @@
     }
     .item{ 
       position: relative;
-      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px;
       margin: 5px;
-      border: 1px solid #ccc;
+      border: 2px solid #ccc;
       border-radius: 2px;
       cursor: pointer;
       z-index: 1;
@@ -27,7 +31,7 @@
         justify-content: center;
         width: 36px;
         height: 24px;
-        margin-top: -24px; 
+        margin-top: -25px; 
         border: 1px solid #ccc;
         border-radius: 2px;
         background-color: rgba(200, 200, 200, .2);
@@ -39,7 +43,7 @@
           background-color: rgba(200, 200, 200, .4);
         }
       }
-      .merge{
+      .merge-anction{
         top: 0;
         left: 50%;
         margin-left: -18px; 
@@ -83,10 +87,11 @@
   }
   .content{
     padding: 10px; 
-    min-height: 100px;
-    max-height: 650px;
+    min-height: 300px;
+    max-height: 60vh;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 2px solid #ccc;
     text-align: left;
+    border-radius: 4px;
   }
 }

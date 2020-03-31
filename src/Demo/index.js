@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './index.scss'
-
+import ClipboardJS from "clipboard";
 
 class Demo extends Component {
   constructor(props) {
@@ -84,9 +84,21 @@ class Demo extends Component {
       result: {}, // 格式化的数据 
     }
   }
+  componentDidMount() {
+    this.clipboard = new ClipboardJS('.copy');
+    this.clipboard.on('success', (e) => { 
+      console.info('Text:', e.text);  
+      e.clearSelection();
+    });
+
+    this.clipboard.on('error', (e) => { 
+      console.error('Trigger:', e.trigger);
+    });
+  }
+
   clickItem = (item) => {
     let { list } = this.state
-    if(list.length === 1) return;
+    if (list.length === 1) return;
     list = this.mapList(list, item.id)
     const selectedList = this.eachList(list)
     this.setState({
@@ -181,7 +193,7 @@ class Demo extends Component {
         left: [...selectedList],
         right: null,
       }
-    } 
+    }
     return res
   }
   // 将合并的对象进行替换  
@@ -197,7 +209,7 @@ class Demo extends Component {
     ids.forEach(id => {
       let index = list.findIndex(item => item.id === id)
       indexes.push(index)
-    }) 
+    })
     for (let i = indexes.length - 1; i >= 0; i--) {
       list.splice(indexes[i], 1)
     }
@@ -244,19 +256,19 @@ class Demo extends Component {
   // 格式化数据
   formatList = () => {
     let { list } = this.state
-    let result = JSON.parse(JSON.stringify(list)) 
+    let result = JSON.parse(JSON.stringify(list))
     result.map(item => {
-      item = this.deleteKey(item) 
+      item = this.deleteKey(item)
       return item
-    }) 
-    if(result.length === 1){
+    })
+    if (result.length === 1) {
       result = result.pop()
-    }else{
+    } else {
       result = {
         disorder: false,
         list: [...result]
       }
-    } 
+    }
     return result;
   }
   // 点击格式化
@@ -270,7 +282,7 @@ class Demo extends Component {
   deleteKey = (item = {}) => {
     if (typeof item.text !== 'string') {
       delete item.text
-    } 
+    }
     delete item.selected
     delete item.isMerged
     delete item.hovered
@@ -298,10 +310,10 @@ class Demo extends Component {
     list[index] = item
     this.setState({ list })
   }
-  submit = () => { 
+  copy = () => {
     const result = this.formatList()
     console.log(result);
-    
+
   }
   render() {
     const { list, selectedList, result } = this.state
@@ -321,7 +333,7 @@ class Demo extends Component {
               >
                 {item.text}
                 {
-                  selectedLen >= 2 && item.selected && <span className='action merge' onClick={e => this.mergeSelected(e)}>合并</span>
+                  selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
                 }
                 {
                   item.hovered && item.isMerged && <span className='action split' onClick={e => this.clickSplit(e, item)}>拆分</span>
@@ -335,7 +347,7 @@ class Demo extends Component {
         </div>
         <div className="action-btns">
           <span className='btn' onClick={() => this.format()}>格式化数据</span>
-          <span className='btn' onClick={() => this.submit()}>提交</span>
+          <span className='btn copy' onClick={() => this.copy()} data-clipboard-text={JSON.stringify(result, (k, v) => v, 4)}>拷贝</span>
         </div>
         <pre className='content'>
           <pre>
