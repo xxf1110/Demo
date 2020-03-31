@@ -113,9 +113,9 @@ class Demo extends Component {
     this.clipboard.on('success', (e) => {
       this.openModal('拷贝成功')
       e.clearSelection();
-      
-    }); 
-    this.clipboard.on('error', (e) => { 
+
+    });
+    this.clipboard.on('error', (e) => {
       this.openModal('拷贝失败')
     });
   }
@@ -158,7 +158,7 @@ class Demo extends Component {
     if (selectedList.length >= 2) {
       let mergeObj = this.merge(selectedList)
       list = this.replace(list, mergeObj)
-      let ids = selectedList.map(item => item.id) 
+      let ids = selectedList.map(item => item.id)
       list = this.delelteItem(list, ids)
     }
     this.setState({
@@ -207,16 +207,67 @@ class Demo extends Component {
   eachList = (list) => {
     return list.filter(item => item.selected)
   }
+
+  // 双击拆分内层
+  onDoubleClick = (e, ) => {
+    const { list } = this.state
+    let id = $(e.target).parents('.merge').last().attr('selfid') * 1
+    console.log(id);
+    // let id2 = $(e.target).attr('selfid')
+    // let id = (id2 || id1) * 1
+    let zIndex = ($(e.target).attr('zindex') || $(e.target).parent('.merge').attr('zindex')) * 1
+    // console.log('id', id);
+    console.log('zIndex', zIndex);
+
+
+    let prev = list.find(item => item.id === id)
+    let current = {}
+    for (let i = 0; i < prev.zIndex; i++) {
+      if (prev.format) {
+        prev.format.map((item, index) => {
+          if (item.zIndex == zIndex) {
+            current = prev.format[index]
+          }
+        })
+      }
+    }
+
+    let prevParent = list.find(item => item.id === id)
+    let parent = {}
+    for (let i = 0; i < prevParent.zIndex; i++) {
+      if (prevParent.format) {
+        prevParent.format.map((item, index) => {
+          if (item.zIndex == (zIndex + 1)) {
+            parent = prevParent.format[index]
+          }
+        })
+      }
+    }
+    // while (parent.zIndex !== (zIndex + 1)) {
+    //   if (!parent.format) {
+    //     parent = prevParent
+    //     break;
+    //   } 
+    //   parent = parent.format.find(item => item.id === id) 
+    //   prevParent = parent
+    // }  
+    console.log(current, parent);
+
+    // this.splitCore(prev, parent)
+  }
   // 合并
   merge = (selectedList) => {
     let len = selectedList.length
+    let zIndexes = selectedList.map(item => item.zIndex || 0)
+    let zIndex = Math.max(...zIndexes) + 1;
     let res = {
       id: selectedList[0].id,
       format: [...selectedList],
       selected: false,
       isMerged: true,
+      zIndex,
       text: (
-        <div className='merge' selfid={selectedList[0].id}>
+        <div className='merge' selfid={selectedList[0].id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
           {
             selectedList.map((item, index) => (
               <div className='item' key={index} >{item.text}</div>
@@ -259,9 +310,40 @@ class Demo extends Component {
     }
     return list;
   }
+  // 双击拆分内层
+  splitCore = (splitObj, parent) => {
+    console.log(parent.format);
+    let index = parent.format.findIndex(item => item.id === splitObj.id)
+    console.log(index);
+    if (splitObj.format.length > 2) {
+      const left = this.split(splitObj)
+      parent = this.insetParent(parent, left, null, index)
+    } else {
+      const [left, right] = this.split(splitObj)
+      parent = this.insetParent(parent, left, right, index)
+    }
+
+    // console.log(parent);
+  }
+  // 双加拆分插入
+  // 拆分后插入
+  insetParent = (parent, left, right, index) => {
+    if (left.length > 2) {
+      left.forEach(item => {
+        item.selected = false
+        item.selected = false
+      })
+      parent.format.splice(index, 1, ...left)
+    } else {
+      left.selected = false
+      right.selected = false
+      parent.format.splice(index, 1, left, right)
+    }
+    return parent;
+  }
   // 点击拆分
   clickSplit = (e, splitObj) => {
-    e.stopPropagation()
+    if (e) e.stopPropagation();
     let { list } = this.state
     list = list.map(item => {
       item.selected = false
@@ -321,7 +403,7 @@ class Demo extends Component {
   }
   // 点击格式化
   format = () => {
-    const result = this.formatList() 
+    const result = this.formatList()
     this.openModal('已格式化数据')
     this.setState({
       result,
