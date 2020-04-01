@@ -21,11 +21,11 @@ function select(o, fn) {
 
   }
 }
-Array.prototype.update = function(index, updateObj){
-  this[index] = updateObj 
+Array.prototype.update = function (index, updateObj) {
+  this[index] = updateObj
   console.log(26)
   return this;
-} 
+}
 
 class Demo extends Component {
   constructor(props) {
@@ -180,9 +180,8 @@ class Demo extends Component {
     let { list, selectedList } = this.state
     if (selectedList.length >= 2) {
       let mergeObj = this.merge(selectedList)
-      list = this.replace(list, mergeObj)
-      let ids = selectedList.map(item => item.id)
-      list = this.delelteItem(list, ids)
+      list = this.replace(list, mergeObj) 
+      list = this.delelteItem(list, mergeObj)
     }
     this.setState({
       list,
@@ -281,11 +280,11 @@ class Demo extends Component {
     console.log(258, JSON.parse(JSON.stringify(newParent)));
     let a = null
     const eachTree = (list) => {
-      list.map((item, index) => { 
+      list.map((item, index) => {
         if (item.zIndex === newParent.zIndex && item.id === newParent.id) {
           console.log(262, JSON.parse(JSON.stringify(list[index])));
           // list[index] = newParent 
-          list.update(index, newParent) 
+          list.update(index, newParent)
           console.log('---------a-----', JSON.parse(JSON.stringify(a)));
           // a.content.selectedList.splice(index, 1, newParent) 
           // a = list
@@ -304,7 +303,7 @@ class Demo extends Component {
         }
       })
     }
-    eachTree(list, )
+    eachTree(list)
     console.log(304, JSON.parse(JSON.stringify(list)))
     setTimeout(() => {
       let b = JSON.parse(JSON.stringify(list))
@@ -367,18 +366,19 @@ class Demo extends Component {
     let len = selectedList.length
     let zIndexes = selectedList.map(item => item.zIndex || 0)
     let zIndex = Math.max(...zIndexes) + 1;
+    let id = Date.now()
     let res = {
-      id: selectedList[0].id,
+      id,
       format: [...selectedList],
       selected: false,
       isMerged: true,
       zIndex,
       text: (
-        <div className='merge' selfid={selectedList[0].id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
+        <div className='merge' selfid={id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
           {
-            selectedList.map((item, index) => { 
+            selectedList.map((item, index) => {
               return (
-                <div className='item' key={index} >{item.text}</div>
+                <div className='item' id={item.id} key={item.id} >{item.text}</div>
               )
             })
           }
@@ -386,14 +386,11 @@ class Demo extends Component {
       ),
       content: {
         className: 'merge',
-        selfid: selectedList[0].id,
+        selfid: id,
         zIndex: zIndex,
         onDoubleClick: this.onDoubleClick,
         selectedList,
-      }, 
-      update(index, newObj){
-        this[index] = newObj  
-      }
+      },
     }
     if (len === 2) {
       res = {
@@ -412,21 +409,29 @@ class Demo extends Component {
   }
   // 将合并的对象进行替换  
   replace = (list, mergeObj) => {
-    let index = list.findIndex(item => item.id === mergeObj.id)
+    let index = list.findIndex(item => item.id === mergeObj.format[0].id)
     list[index] = mergeObj
     return list;
   }
   //替换后从数据中删除多余的
-  delelteItem = (list, ids) => {
-    let indexes = []
-    ids.splice(0, 1)
-    ids.forEach(id => {
-      let index = list.findIndex(item => item.id === id)
-      indexes.push(index)
-    })
-    for (let i = indexes.length - 1; i >= 0; i--) {
-      list.splice(indexes[i], 1)
-    }
+  delelteItem = (list, mergeObj) => {
+    if (mergeObj.format.length > 2) {
+      let ids = mergeObj.format.map(item => item.id)
+      ids.splice(0, 1)
+      let indexes = []
+      ids.forEach(id => {
+        let index = list.findIndex(item => item.id === id)
+        indexes.push(index)
+      })
+      for (let i = indexes.length - 1; i >= 0; i--) {
+        list.splice(indexes[i], 1)
+      }
+    } else {
+      let index = list.findIndex(item => item.id === mergeObj.right.id)
+      if (index !== -1) {
+        list.splice(index, 1)
+      }
+    } 
     return list;
   }
   // 双击拆分内层 合并parent
@@ -454,8 +459,9 @@ class Demo extends Component {
       item.isMerged = false
     })
 
-    // let a = JSON.parse(JSON.stringify(newParent))
-    newParent.content.zIndex = newParent.content.zIndex - 1
+    // let a = JSON.parse(JSON.stringify(newParent)) 
+    // newParent.content.zIndex = newParent.content.zIndex - 1
+    // newParent.zIndex = newParent.zIndex - 1
     newParent.content.selectedList.splice(index, 1, ...splitObj.content.selectedList)
 
     console.log(55555, newParent);
@@ -493,7 +499,7 @@ class Demo extends Component {
     } else {
       const [left, right] = this.split(splitObj)
       list = this.inset(list, left, right, index)
-    }
+    } 
     this.setState({ list })
   }
   // 拆分 
@@ -583,7 +589,7 @@ class Demo extends Component {
     const result = this.formatList()
     console.log(result);
   }
-  renderDOM = (item) => { 
+  renderDOM = (item) => {
     // if (typeof item.text == 'string') return item.text
     // const run = (content) => {
     //   return <div key={content.selfid} className={content.className} selfid={content.selfid} zindex={content.zIndex} onDoubleClick={content.onDoubleClick}>
@@ -609,7 +615,7 @@ class Demo extends Component {
 
     if (typeof item.text == 'string') return item.text
     const run = (selectedList) => {
-      return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={item.content.onDoubleClick}>
+      return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={this.onDoubleClick}>
         {
           selectedList.map(selected => {
             if (selected.selectedList && selected.selectedList.length) {
@@ -627,7 +633,7 @@ class Demo extends Component {
           })
         }
       </div>
-    } 
+    }
     let res = run(item.content.selectedList);
     // console.log(res);
     return res
@@ -652,10 +658,10 @@ class Demo extends Component {
                 onClick={() => this.clickItem(item)}
               >
                 {
-                  // item.text
+                  item.text
                 }
                 {
-                  this.renderDOM(item)
+                  // this.renderDOM(item)
                 }
                 {
                   selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
