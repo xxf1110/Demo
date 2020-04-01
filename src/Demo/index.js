@@ -245,8 +245,9 @@ class Demo extends Component {
     let id = $(e.target).parents('.item').last().attr('selfid') * 1
     console.log('id', id);
 
-    let prev = list.find(item => item.id === id) 
+    let prev = list.find(item => item.id === id)
     if (prev.id === splitId) {
+      console.log(250, JSON.parse(JSON.stringify(list)))
       this.clickSplit(null, prev)
       return;
     }
@@ -271,42 +272,42 @@ class Demo extends Component {
     currentArr = run(prev.format, splitId, [])
     currentArr = currentArr.flat(Infinity)
     let current = currentArr[0]
-    console.log('current', current) 
+    console.log('current', current)
     let parent = {}
-    if(prev.id === current.parentId){
+    if (prev.id === current.parentId) {
       parent = prev
-    }else{
+    } else {
       let parentArr = [prev]
       parentArr = run(prev.format, current.parentId, [])
-      parentArr = parentArr.flat(Infinity) 
+      parentArr = parentArr.flat(Infinity)
       parent = parentArr[0]
-    } 
+    }
     console.log('parent', parent)
     let newParent = this.splitCurrentAndMerge(current, parent)
     console.log('newParent', JSON.parse(JSON.stringify(newParent)))
-    if(prev.id === newParent.id){ 
+    if (prev.id === newParent.id) {
       let prevIndex = list.findIndex(item => item.id === id)
       list[prevIndex] = newParent
       console.log(291, JSON.parse(JSON.stringify(list)))
-      this.setState({list})
+      this.setState({ list })
       return;
-    }   
+    }
     let cen = null // 缓存newParent的父及
     const eachTree = (list) => {
       list.map((item, index) => {
         if (item.id === newParent.id) {
-          console.log(262, JSON.parse(JSON.stringify(list[index]))); 
-          list.update(index, newParent) 
+          console.log(262, JSON.parse(JSON.stringify(list[index])));
+          list.update(index, newParent)
         } else {
-          if (item.format) { 
+          if (item.format) {
             eachTree(item.format)
           }
         }
       })
     }
-    eachTree(list)  
-    console.log(308, JSON.parse(JSON.stringify(list))); 
-    this.setState(({list}))
+    eachTree(list)
+    console.log(308, JSON.parse(JSON.stringify(list)));
+    this.setState(({ list }))
     return;
 
     // let parentArr = [prev]
@@ -367,7 +368,7 @@ class Demo extends Component {
     current.format.forEach(item => {
       item.parentId = parent.id
     })
-    parent.format.splice(index, 1, ...current.format) 
+    parent.format.splice(index, 1, ...current.format)
     return parent;
   }
   // 合并
@@ -516,13 +517,8 @@ class Demo extends Component {
     this.setState({ list })
   }
   // 拆分 
-  split = (splitObj) => {
-    if (!splitObj.isMerged) return;
-    if (splitObj.format.length > 2) {
-      return [...splitObj.left]
-    } else {
-      return [splitObj.left, splitObj.right]
-    }
+  split = (splitObj) => { 
+    return [...splitObj.format]
   }
   // 拆分后插入
   inset = (list, left, right, index) => {
@@ -603,13 +599,36 @@ class Demo extends Component {
     console.log(result);
   }
   renderDOM = (item) => {
+    if (!item.format) return item.text
+    const run = (item) => {
+      return <div key={item.id} className='merge' selfid={item.id} zindex={item.zIndex} onDoubleClick={this.onDoubleClick}>
+        {
+          item.format && item.format.map(children => {
+            if (children.format && children.format.length) {
+              return run(children)
+            } else {
+              return (
+                <div
+                  key={children.id}
+                  selfid={children.id}
+                  className={`item`}
+                  onClick={() => this.clickItem(children)}
+                >{children.text}</div>
+              )
+            }
+          })
+        }
+      </div>
+    }
+    let res = run(item);
+
     // if (typeof item.text == 'string') return item.text
-    // const run = (content) => {
-    //   return <div key={content.selfid} className={content.className} selfid={content.selfid} zindex={content.zIndex} onDoubleClick={content.onDoubleClick}>
+    // const run = (selectedList) => {
+    //   return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={this.onDoubleClick}>
     //     {
-    //       content.selectedList && content.selectedList.map(selected => {
-    //         if (selected.content && selected.content.selectedList.length) {
-    //           return run(selected.content)
+    //       selectedList.map(selected => {
+    //         if (selected.selectedList && selected.selectedList.length) {
+    //           return run(selected.selectedList)
     //         } else {
     //           return (
     //             <div
@@ -623,31 +642,8 @@ class Demo extends Component {
     //       })
     //     }
     //   </div>
-    // } 
-    // let res = run(item.content);
-
-    if (typeof item.text == 'string') return item.text
-    const run = (selectedList) => {
-      return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={this.onDoubleClick}>
-        {
-          selectedList.map(selected => {
-            if (selected.selectedList && selected.selectedList.length) {
-              return run(selected.selectedList)
-            } else {
-              return (
-                <div
-                  key={selected.id}
-                  selfid={selected.id}
-                  className={`item`}
-                  onClick={() => this.clickItem(selected)}
-                >{selected.text}</div>
-              )
-            }
-          })
-        }
-      </div>
-    }
-    let res = run(item.content.selectedList);
+    // }
+    // let res = run(item.content.selectedList);
     // console.log(res);
     return res
   }
@@ -671,10 +667,10 @@ class Demo extends Component {
                 onClick={() => this.clickItem(item)}
               >
                 {
-                  item.text
+                  // item.text
                 }
                 {
-                  // this.renderDOM(item)
+                  this.renderDOM(item)
                 }
                 {
                   selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
