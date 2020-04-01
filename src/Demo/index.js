@@ -29,75 +29,93 @@ class Demo extends Component {
       list: [
         {
           id: 0,
-          text: '向'
+          text: '向',
+          zIndex: 0,
         },
         {
           id: 1,
-          text: '我'
+          text: '我',
+          zIndex: 0,
         },
         {
           id: 2,
-          text: '你'
+          text: '你',
+          zIndex: 0,
         },
         {
           id: 3,
-          text: '他'
+          text: '他',
+          zIndex: 0,
         },
         {
           id: 4,
-          text: '小'
+          text: '小',
+          zIndex: 0,
         },
         {
           id: 5,
-          text: '飞'
+          text: '飞',
+          zIndex: 0,
         },
         {
           id: 6,
-          text: '李'
+          text: '李',
+          zIndex: 0,
         },
         {
           id: 7,
-          text: '王'
+          text: '王',
+          zIndex: 0,
         },
         {
           id: 8,
-          text: '二'
+          text: '二',
+          zIndex: 0,
         },
         {
           id: 9,
-          text: '张'
+          text: '张',
+          zIndex: 0,
         },
         {
           id: 11,
-          text: '赵'
+          text: '赵',
+          zIndex: 0,
         },
         {
           id: 12,
-          text: '马'
+          text: '马',
+          zIndex: 0,
         },
         {
           id: 13,
-          text: '王'
+          text: '王',
+          zIndex: 0,
         },
         {
           id: 14,
-          text: '晓'
+          text: '晓',
+          zIndex: 0,
         },
         {
           id: 15,
-          text: '三'
+          text: '三',
+          zIndex: 0,
         },
         {
           id: 16,
-          text: '二'
+          text: '二',
+          zIndex: 0,
         },
         {
           id: 17,
-          text: '五'
+          text: '五',
+          zIndex: 0,
         },
         {
           id: 18,
-          text: '六'
+          text: '六',
+          zIndex: 0,
         },
       ],
       selectedList: [], // 选中的列表
@@ -363,7 +381,7 @@ class Demo extends Component {
         zIndex: zIndex,
         onDoubleClick: this.onDoubleClick,
         selectedList,
-      }
+      }, 
     }
     if (len === 2) {
       res = {
@@ -524,6 +542,7 @@ class Demo extends Component {
     delete item.hovered
     delete item.left
     delete item.right
+    delete item.content
     if (item.format) {
       item.format = this.extend(item.format)
     }
