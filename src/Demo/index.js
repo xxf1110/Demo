@@ -210,46 +210,129 @@ class Demo extends Component {
 
   // 双击拆分内层
   onDoubleClick = (e) => {
-    e.stopPropagation() 
+    e.stopPropagation()
     const { list } = this.state
-    let id = $(e.target).parents('.merge').last().attr('selfid') * 1
-    console.log('id', id);
-    let splitId = $(e.target).parent('.merge').attr('selfid') * 1
+    console.log(e.target.classList);
+    let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1;
+    console.log($(e.target).parent('.merge'));
     console.log('splitId', splitId)
+
     let zIndex = ($(e.target).attr('zindex') || $(e.target).parent('.merge').attr('zindex')) * 1
-    console.log('zIndex', zIndex); 
+    console.log('zIndex', zIndex);
+
+    let id = $(e.target).parents('.item').last().attr('selfid') * 1
+    console.log('id', $(e.target).parents('.item').last().attr('selfid'));
 
     let prev = list.find(item => item.id === id)
-    let currentArr = []
+    console.log(0, prev);
+    if (prev.zIndex === zIndex && prev.id === splitId) {
+      this.clickSplit(null, prev)
+      return;
+    }
+
+    let wrapIndex = list.findIndex(item => item.id === id)
     let parentArr = [prev]
     const run = (arr = [], zIndex, res = []) => {
-      if(!arr.length) return arr;
+      if (!arr.length) return arr;
       let filters = arr.filter(item => item.zIndex === zIndex)
-      if(filters.length){
+      if (filters.length) {
         return res.concat(...filters)
-      }else{ 
+      } else {
         res = arr.map(item => {
-          if(item.format){
+          if (item.format) {
             return run(item.format, zIndex, res)
           }
           return [];
-        })  
+        })
         return res;
       }
     }
-    if(prev.format){
-      currentArr = run(prev.format, zIndex, []) 
-    }
-    if(prev.zIndex !== zIndex + 1){
+    if (prev.zIndex !== zIndex + 1) {
       parentArr = run(prev.format, zIndex + 1, [])
     }
-    currentArr = currentArr.flat(Infinity) 
-    parentArr = parentArr.flat(Infinity) 
-    let current = currentArr.find(item => item.id === splitId)
+    parentArr = parentArr.flat(Infinity)
     let parent = parentArr[0]
-    // console.log(current)
-    // console.log(parent)   
-    this.splitCore(current, parent)
+
+    // 合并parent 插入原list 更新
+    let newParent = this.splitCore(parent, splitId)
+    console.log(258, JSON.parse(JSON.stringify(newParent)));
+    let a = null
+    const eachTree = (list) => {
+      list.map((item, index) => {
+        if (item.zIndex === newParent.zIndex && item.id === newParent.id) {
+          console.log(262, JSON.parse(JSON.stringify(list[index])));
+          // list[index] = newParent 
+          a = list
+          console.log('---------a-----', JSON.parse(JSON.stringify(a)));
+          if (!a) {
+            list[index] = newParent
+          } else {
+            a[index] = newParent
+            console.log('---------a-----', JSON.parse(JSON.stringify(a)));
+          }
+          console.log(264, JSON.parse(JSON.stringify(list[index])));
+        } else {
+          if (item.format) {
+            eachTree(item.format)
+          }
+        }
+      })
+    }
+    eachTree(list)
+    setTimeout(() => {
+      let b = JSON.parse(JSON.stringify(list))
+      console.log(271, b);
+    }, 1000)
+
+
+    // const findIndex = (prevFormat = [], parent = {}, allIndex = []) => {
+    //   allIndex = prevFormat.map((item, index, orignArray) => {
+    //     if (item.id === parent.id) {
+    //       allIndex = allIndex.concat([index])
+    //       if (item.zIndex === parent.zIndex) {
+    //         // console.log('prevFormat', JSON.parse(JSON.stringify(orignArray[index])));
+    //         // orignArray[index] = newParent 
+    //         // console.log('newParent', newParent); 
+    //         return allIndex;
+    //       } else {
+    //         return allIndex.concat(findIndex(item.format, parent, allIndex))
+    //       }
+    //     } else {
+    //       if (item.format) {
+    //         return allIndex.concat(findIndex(item.format, parent, allIndex))
+    //       }
+    //       return allIndex;
+    //     }
+    //   })
+    //   return allIndex;
+    // }
+
+    // let allIndex = []
+    // if (prev.format && prev.zIndex !== newParent.zIndex) {
+    //   allIndex = findIndex(prev.format, parent, allIndex)
+    // }
+    // allIndex = allIndex.flat(Infinity)
+
+    // console.log(9999, allIndex);
+
+
+
+    // if (allIndex.length) {
+    //   console.log(222);
+    //   list[wrapIndex] = prev
+    //   console.log(list[wrapIndex]);
+    // } else {
+    //   list[wrapIndex] = newParent
+    // }
+    // console.log(allIndex);
+    // console.log(666, prev);
+    // console.log(b);
+    // this.setState({ list: b }, () => {
+    //   console.log(8888888, this.state.list);
+    // })
+    // setTimeout(() => {
+    //   this.setState({list: [...list]})
+    // }, 5000)
   }
   // 合并
   merge = (selectedList) => {
@@ -261,16 +344,26 @@ class Demo extends Component {
       format: [...selectedList],
       selected: false,
       isMerged: true,
-      zIndex, 
+      zIndex,
       text: (
         <div className='merge' selfid={selectedList[0].id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
           {
-            selectedList.map((item, index) => (
-              <div className='item' key={index} >{item.text}</div>
-            ))
+            selectedList.map((item, index) => {
+              console.log(item.text);
+              return (
+                <div className='item' key={index} >{item.text}</div>
+              )
+            })
           }
         </div>
       ),
+      content: {
+        className: 'merge',
+        selfid: selectedList[0].id,
+        zIndex: zIndex,
+        onDoubleClick: this.onDoubleClick,
+        selectedList,
+      }
     }
     if (len === 2) {
       res = {
@@ -307,22 +400,34 @@ class Demo extends Component {
     return list;
   }
   // 双击拆分内层 合并parent
-  splitCore = (splitObj, parent) => {   
-    let index = parent.format.findIndex(item => item.id === splitObj.id)   
-    splitObj = parent.format.splice(index, 1, {})[0] 
-    if (splitObj.format.length > 2) {  
-      const left = splitObj.left 
-      parent.format.splice(index, 1, ...left)
+  splitCore = (parent, splitId) => {
+    let newParent = JSON.parse(JSON.stringify(parent))
+    let index = parent.format.findIndex(item => item.id === splitId)
+    console.log(index);
+    let splitObj = JSON.parse(JSON.stringify(parent.format[index]))
+    console.log(444, splitObj);
+
+    let len = splitObj.format.length
+
+    if (len > 2) {
+      const left = splitObj.left
+      newParent.format.splice(index, 1, ...left)
     } else {
-      const left = {...splitObj.left}
-      const right = {...splitObj.right} 
-      parent.format.splice(index, 1, left, right)   
-    } 
-    // 合并parent 插入原list 更新
-    console.log(parent)
+      const left = { ...splitObj.left }
+      const right = { ...splitObj.right }
+      newParent.format.splice(index, 1, left, right)
+    }
+    newParent.format.forEach(item => {
+      item.selected = false
+      item.isMerged = false
+    })
 
+    // let a = JSON.parse(JSON.stringify(newParent))
+    newParent.content.zIndex = newParent.content.zIndex - 1
+    newParent.content.selectedList.splice(index, 1, ...splitObj.content.selectedList)
 
-
+    console.log(55555, newParent);
+    return newParent;
   }
   // 双击拆分插入
 
@@ -444,16 +549,49 @@ class Demo extends Component {
   copy = () => {
     const result = this.formatList()
     console.log(result);
+  }
+  renderDOM = (item, list, index) => {
+    // console.log(list);
+    // if(list.length - 1 === index){
+    //   console.log(3333333333333, item);
+    //   return;
+    // }
+    if (typeof item.text == 'string') return item.text
+    const run = (selectedList) => {
+      return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={item.content.onDoubleClick}>
+        {
+          selectedList.map(selected => {
+            if (selected.selectedList && selected.selectedList.length) {
+              return run(selected.selectedList)
+            } else {
+              return (
+                <div
+                  key={selected.id}
+                  selfid={selected.id}
+                  className={`item`}
+                  onClick={() => this.clickItem(selected)}
+                >{selected.text}</div>
+              )
+            }
+          })
+        }
+      </div>
+    }
 
+    let res = run(item.content.selectedList);
+    // console.log(res);
+    return res
   }
   render() {
     const { list, selectedList, result, desc, showModal } = this.state
     const selectedLen = selectedList.length
+    // console.log(999, list);
+
     return (
       <div className='demo'>
         <div className="list">
           {
-            list.map(item => (
+            list.map((item, index) => (
               <div
                 key={item.id}
                 selfid={item.id}
@@ -463,7 +601,12 @@ class Demo extends Component {
                 onMouseLeave={() => this.onMouseLeave(item)}
                 onClick={() => this.clickItem(item)}
               >
-                {item.text}
+                {
+                  // item.text
+                }
+                {
+                  this.renderDOM(item, list, index)
+                }
                 {
                   selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
                 }
