@@ -180,7 +180,7 @@ class Demo extends Component {
     let { list, selectedList } = this.state
     if (selectedList.length >= 2) {
       let mergeObj = this.merge(selectedList)
-      list = this.replace(list, mergeObj) 
+      list = this.replace(list, mergeObj)
       list = this.delelteItem(list, mergeObj)
     }
     this.setState({
@@ -243,125 +243,132 @@ class Demo extends Component {
     console.log('zIndex', zIndex);
 
     let id = $(e.target).parents('.item').last().attr('selfid') * 1
-    console.log('id',id);
+    console.log('id', id);
 
-    let prev = list.find(item => item.id === id)
-    console.log(0, prev);
+    let prev = list.find(item => item.id === id) 
     if (prev.id === splitId) {
       this.clickSplit(null, prev)
       return;
-    } 
+    }
     console.log(list)
-    return ;
-    let wrapIndex = list.findIndex(item => item.id === id)
 
-    let parentArr = [prev]
-    const run = (arr = [], zIndex, res = []) => {
+    const run = (arr = [], splitId, res = []) => {
       if (!arr.length) return arr;
-      let filters = arr.filter(item => item.zIndex === zIndex)
+      let filters = arr.filter(item => item.id === splitId)
       if (filters.length) {
         return res.concat(...filters)
       } else {
         res = arr.map(item => {
           if (item.format) {
-            return run(item.format, zIndex, res)
+            return run(item.format, splitId, res)
           }
           return [];
         })
         return res;
       }
     }
-    if (prev.zIndex !== zIndex + 1) {
-      parentArr = run(prev.format, zIndex + 1, [])
-    }
-    parentArr = parentArr.flat(Infinity)
-    let parent = parentArr[0]
-
-    // 合并parent 插入原list 更新
-    let newParent = this.splitCore(parent, splitId)
-    console.log(258, JSON.parse(JSON.stringify(newParent)));
-    let a = null
+    let currentArr = [prev]
+    currentArr = run(prev.format, splitId, [])
+    currentArr = currentArr.flat(Infinity)
+    let current = currentArr[0]
+    console.log('current', current) 
+    let parent = {}
+    if(prev.id === current.parentId){
+      parent = prev
+    }else{
+      let parentArr = [prev]
+      parentArr = run(prev.format, current.parentId, [])
+      parentArr = parentArr.flat(Infinity) 
+      parent = parentArr[0]
+    } 
+    console.log('parent', parent)
+    let newParent = this.splitCurrentAndMerge(current, parent)
+    console.log('newParent', JSON.parse(JSON.stringify(newParent)))
+    if(prev.id === newParent.id){ 
+      let prevIndex = list.findIndex(item => item.id === id)
+      list[prevIndex] = newParent
+      console.log(291, JSON.parse(JSON.stringify(list)))
+      this.setState({list})
+      return;
+    }   
+    let cen = null // 缓存newParent的父及
     const eachTree = (list) => {
       list.map((item, index) => {
-        if (item.zIndex === newParent.zIndex && item.id === newParent.id) {
-          console.log(262, JSON.parse(JSON.stringify(list[index])));
-          // list[index] = newParent 
-          list.update(index, newParent)
-          console.log('---------a-----', JSON.parse(JSON.stringify(a)));
-          // a.content.selectedList.splice(index, 1, newParent) 
-          // a = list
-          // if (!a) {
-          //   list[index] = newParent
-          // } else {
-          //   a[index] = newParent
-          //   console.log('---------a-----', JSON.parse(JSON.stringify(a)));
-          // }
-          // console.log(264, JSON.parse(JSON.stringify(list[index])));
+        if (item.id === newParent.id) {
+          console.log(262, JSON.parse(JSON.stringify(list[index]))); 
+          list.update(index, newParent) 
         } else {
-          if (item.format) {
-            a = item
+          if (item.format) { 
             eachTree(item.format)
           }
         }
       })
     }
-    eachTree(list)
-    console.log(304, JSON.parse(JSON.stringify(list)))
-    setTimeout(() => {
-      let b = JSON.parse(JSON.stringify(list))
-      console.log(307, b);
-      // this.setState({list: b})
-    }, 1000)
+    eachTree(list)  
+    console.log(308, JSON.parse(JSON.stringify(list))); 
+    this.setState(({list}))
+    return;
 
-
-    // const findIndex = (prevFormat = [], parent = {}, allIndex = []) => {
-    //   allIndex = prevFormat.map((item, index, orignArray) => {
-    //     if (item.id === parent.id) {
-    //       allIndex = allIndex.concat([index])
-    //       if (item.zIndex === parent.zIndex) {
-    //         // console.log('prevFormat', JSON.parse(JSON.stringify(orignArray[index])));
-    //         // orignArray[index] = newParent 
-    //         // console.log('newParent', newParent); 
-    //         return allIndex;
-    //       } else {
-    //         return allIndex.concat(findIndex(item.format, parent, allIndex))
+    // let parentArr = [prev]
+    // const run = (arr = [], splitId, res = []) => {
+    //   if (!arr.length) return arr;
+    //   let filters = arr.filter(item => item.id === splitId)
+    //   if (filters.length) {
+    //     return res.concat(...filters)
+    //   } else {
+    //     res = arr.map(item => {
+    //       if (item.format) {
+    //         return run(item.format, splitId, res)
     //       }
+    //       return [];
+    //     })
+    //     return res;
+    //   }
+    // }
+    // parentArr = run(prev.format, splitId, [])
+
+
+
+
+
+
+    // console.log(2222222, parentArr)  
+    // if (prev.zIndex !== zIndex + 1) {
+    //   parentArr = run(prev.format, zIndex + 1, [])
+    // }
+    // parentArr = parentArr.flat(Infinity)
+    // let parent = parentArr[0]
+
+    // 合并parent 插入原list 更新
+    // let newParent = this.splitCore(parent, splitId) 
+    // let a = null
+    // const eachTree = (list) => {
+    //   list.map((item, index) => {
+    //     if (item.zIndex === newParent.zIndex && item.id === newParent.id) {
+    //       console.log(262, JSON.parse(JSON.stringify(list[index])));
+    //       // list[index] = newParent 
+    //       list.update(index, newParent)
+    //       console.log('---------a-----', JSON.parse(JSON.stringify(a))); 
     //     } else {
     //       if (item.format) {
-    //         return allIndex.concat(findIndex(item.format, parent, allIndex))
+    //         a = item
+    //         eachTree(item.format)
     //       }
-    //       return allIndex;
     //     }
     //   })
-    //   return allIndex;
     // }
+    // eachTree(list) 
 
-    // let allIndex = []
-    // if (prev.format && prev.zIndex !== newParent.zIndex) {
-    //   allIndex = findIndex(prev.format, parent, allIndex)
-    // }
-    // allIndex = allIndex.flat(Infinity)
-
-    // console.log(9999, allIndex);
-
-
-
-    // if (allIndex.length) {
-    //   console.log(222);
-    //   list[wrapIndex] = prev
-    //   console.log(list[wrapIndex]);
-    // } else {
-    //   list[wrapIndex] = newParent
-    // }
-    // console.log(allIndex);
-    // console.log(666, prev);
-    // console.log(b);
-    // this.setState({ list: b }, () => {
-    //   console.log(8888888, this.state.list);
-    // })
-    // setTimeout(() => {
-    //   this.setState({list: [...list]})
-    // }, 5000)
+  }
+  // 拆current 合并到parent
+  splitCurrentAndMerge = (current, parent) => {
+    let index = parent.format.findIndex(item => item.id === current.id)
+    console.log('index', index)
+    current.format.forEach(item => {
+      item.parentId = parent.id
+    })
+    parent.format.splice(index, 1, ...current.format) 
+    return parent;
   }
   // 合并
   merge = (selectedList) => {
@@ -437,7 +444,7 @@ class Demo extends Component {
       if (index !== -1) {
         list.splice(index, 1)
       }
-    } 
+    }
     return list;
   }
   // 双击拆分内层 合并parent
@@ -505,7 +512,7 @@ class Demo extends Component {
     } else {
       const [left, right] = this.split(splitObj)
       list = this.inset(list, left, right, index)
-    } 
+    }
     this.setState({ list })
   }
   // 拆分 
