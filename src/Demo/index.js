@@ -21,6 +21,11 @@ function select(o, fn) {
 
   }
 }
+Array.prototype.update = function(index, updateObj){
+  this[index] = updateObj 
+  console.log(26)
+  return this;
+} 
 
 class Demo extends Component {
   constructor(props) {
@@ -276,30 +281,35 @@ class Demo extends Component {
     console.log(258, JSON.parse(JSON.stringify(newParent)));
     let a = null
     const eachTree = (list) => {
-      list.map((item, index) => {
+      list.map((item, index) => { 
         if (item.zIndex === newParent.zIndex && item.id === newParent.id) {
           console.log(262, JSON.parse(JSON.stringify(list[index])));
           // list[index] = newParent 
-          a = list
+          list.update(index, newParent) 
           console.log('---------a-----', JSON.parse(JSON.stringify(a)));
-          if (!a) {
-            list[index] = newParent
-          } else {
-            a[index] = newParent
-            console.log('---------a-----', JSON.parse(JSON.stringify(a)));
-          }
-          console.log(264, JSON.parse(JSON.stringify(list[index])));
+          // a.content.selectedList.splice(index, 1, newParent) 
+          // a = list
+          // if (!a) {
+          //   list[index] = newParent
+          // } else {
+          //   a[index] = newParent
+          //   console.log('---------a-----', JSON.parse(JSON.stringify(a)));
+          // }
+          // console.log(264, JSON.parse(JSON.stringify(list[index])));
         } else {
           if (item.format) {
+            a = item
             eachTree(item.format)
           }
         }
       })
     }
-    eachTree(list)
+    eachTree(list, )
+    console.log(304, JSON.parse(JSON.stringify(list)))
     setTimeout(() => {
       let b = JSON.parse(JSON.stringify(list))
-      console.log(271, b);
+      console.log(307, b);
+      // this.setState({list: b})
     }, 1000)
 
 
@@ -366,8 +376,7 @@ class Demo extends Component {
       text: (
         <div className='merge' selfid={selectedList[0].id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
           {
-            selectedList.map((item, index) => {
-              console.log(item.text);
+            selectedList.map((item, index) => { 
               return (
                 <div className='item' key={index} >{item.text}</div>
               )
@@ -382,6 +391,9 @@ class Demo extends Component {
         onDoubleClick: this.onDoubleClick,
         selectedList,
       }, 
+      update(index, newObj){
+        this[index] = newObj  
+      }
     }
     if (len === 2) {
       res = {
@@ -419,6 +431,8 @@ class Demo extends Component {
   }
   // 双击拆分内层 合并parent
   splitCore = (parent, splitId) => {
+    parent.update && parent.update()
+    console.log(parent)
     let newParent = JSON.parse(JSON.stringify(parent))
     let index = parent.format.findIndex(item => item.id === splitId)
     console.log(index);
@@ -569,12 +583,30 @@ class Demo extends Component {
     const result = this.formatList()
     console.log(result);
   }
-  renderDOM = (item, list, index) => {
-    // console.log(list);
-    // if(list.length - 1 === index){
-    //   console.log(3333333333333, item);
-    //   return;
-    // }
+  renderDOM = (item) => { 
+    // if (typeof item.text == 'string') return item.text
+    // const run = (content) => {
+    //   return <div key={content.selfid} className={content.className} selfid={content.selfid} zindex={content.zIndex} onDoubleClick={content.onDoubleClick}>
+    //     {
+    //       content.selectedList && content.selectedList.map(selected => {
+    //         if (selected.content && selected.content.selectedList.length) {
+    //           return run(selected.content)
+    //         } else {
+    //           return (
+    //             <div
+    //               key={selected.id}
+    //               selfid={selected.id}
+    //               className={`item`}
+    //               onClick={() => this.clickItem(selected)}
+    //             >{selected.text}</div>
+    //           )
+    //         }
+    //       })
+    //     }
+    //   </div>
+    // } 
+    // let res = run(item.content);
+
     if (typeof item.text == 'string') return item.text
     const run = (selectedList) => {
       return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={item.content.onDoubleClick}>
@@ -595,8 +627,7 @@ class Demo extends Component {
           })
         }
       </div>
-    }
-
+    } 
     let res = run(item.content.selectedList);
     // console.log(res);
     return res
@@ -624,7 +655,7 @@ class Demo extends Component {
                   // item.text
                 }
                 {
-                  this.renderDOM(item, list, index)
+                  this.renderDOM(item)
                 }
                 {
                   selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
