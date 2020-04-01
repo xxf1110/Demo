@@ -243,16 +243,18 @@ class Demo extends Component {
     console.log('zIndex', zIndex);
 
     let id = $(e.target).parents('.item').last().attr('selfid') * 1
-    console.log('id', $(e.target).parents('.item').last().attr('selfid'));
+    console.log('id',id);
 
     let prev = list.find(item => item.id === id)
     console.log(0, prev);
-    if (prev.zIndex === zIndex && prev.id === splitId) {
+    if (prev.id === splitId) {
       this.clickSplit(null, prev)
       return;
-    }
-
+    } 
+    console.log(list)
+    return ;
     let wrapIndex = list.findIndex(item => item.id === id)
+
     let parentArr = [prev]
     const run = (arr = [], zIndex, res = []) => {
       if (!arr.length) return arr;
@@ -367,6 +369,7 @@ class Demo extends Component {
     let zIndexes = selectedList.map(item => item.zIndex || 0)
     let zIndex = Math.max(...zIndexes) + 1;
     let id = Date.now()
+
     let res = {
       id,
       format: [...selectedList],
@@ -405,6 +408,9 @@ class Demo extends Component {
         right: null,
       }
     }
+    res.format.forEach(item => {
+      item.parentId = id
+    })
     return res
   }
   // 将合并的对象进行替换  
