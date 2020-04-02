@@ -147,13 +147,10 @@ class Demo extends Component {
   }
   clickItem = (item) => {
     let { list, selectedInList } = this.state
-    if (list.length === 1) return;
-    console.log('------item----', item);
+    if (list.length === 1) return; 
     // 点击外层内层清空选中 
-    if (selectedInList.length) {
-      console.log(154, '点击外层内层清空选中', selectedInList);
-      let insetParent = findById(list, selectedInList[0].parentId)
-      console.log('insetParent', insetParent);
+    if (selectedInList.length) { 
+      let insetParent = findById(list, selectedInList[0].parentId) 
       if (insetParent) {
         insetParent.format.forEach(item => {
           item.selected = false
@@ -166,10 +163,8 @@ class Demo extends Component {
       }
     }
 
-    list = this.mapList(list, item.id)
-    console.log(176, JSON.parse(JSON.stringify(list)));
-    const selectedList = this.eachList(list)
-    console.log(196, selectedList);
+    list = this.mapList(list, item.id) 
+    const selectedList = this.eachList(list) 
     this.setState({
       selectedList,
       list,
@@ -180,8 +175,7 @@ class Demo extends Component {
     if (e) e.stopPropagation();
     let { list, selectedList } = this.state
     if (selectedList.length) {
-      let mergeObj = this.merge(selectedList)
-      console.log(164, mergeObj);
+      let mergeObj = this.merge(selectedList) 
       list = this.replace(list, mergeObj)
       list = this.delelteItem(list, mergeObj)
     }
@@ -237,25 +231,21 @@ class Demo extends Component {
     e.stopPropagation()
     let startTime = Date.now()
     console.log('-------startTime', startTime);
-    const { list } = this.state
-    console.log('-----------------2--------------', currentId);
-    console.log('list', JSON.parse(JSON.stringify(list)));
+    const { list } = this.state 
 
     // let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1;
     // console.log($(e.target).parent('.merge'));
     // console.log('splitId', splitId)
     let splitId = currentId
 
-    let id = $(e.target).parents('.item').last().attr('selfid') * 1
-    console.log('id', id);
+    let id = $(e.target).parents('.item').last().attr('selfid') * 1 
 
     let prev = list.find(item => item.id === id)
     if (prev.id === splitId) {
       console.log(250, JSON.parse(JSON.stringify(list)))
       this.clickSplit(null, prev)
       return;
-    }
-    console.log(list)
+    } 
 
     const run = (arr = [], splitId, res = []) => {
       if (!arr.length) return arr;
@@ -275,8 +265,7 @@ class Demo extends Component {
     let currentArr = [prev]
     currentArr = run(prev.format, splitId, [])
     currentArr = currentArr.flat(Infinity)
-    let current = currentArr[0]
-    console.log('current', current)
+    let current = currentArr[0] 
     let parent = {}
     if (prev.id === current.parentId) {
       parent = prev
@@ -285,22 +274,18 @@ class Demo extends Component {
       parentArr = run(prev.format, current.parentId, [])
       parentArr = parentArr.flat(Infinity)
       parent = parentArr[0]
-    }
-    console.log('parent', parent)
-    let newParent = this.splitCurrentAndMerge(current, parent)
-    console.log('newParent', JSON.parse(JSON.stringify(newParent)))
+    } 
+    let newParent = this.splitCurrentAndMerge(current, parent) 
     if (prev.id === newParent.id) {
       let prevIndex = list.findIndex(item => item.id === id)
-      list[prevIndex] = newParent
-      console.log(291, JSON.parse(JSON.stringify(list)))
+      list[prevIndex] = newParent 
       this.setState({ list })
       return;
     }
 
     const eachTree = (list) => {
       list.map((item, index) => {
-        if (item.id === newParent.id) {
-          console.log(262, JSON.parse(JSON.stringify(list[index])));
+        if (item.id === newParent.id) { 
           list.update(index, newParent)
         } else {
           if (item.format) {
@@ -309,8 +294,7 @@ class Demo extends Component {
         }
       })
     }
-    eachTree(list)
-    console.log(308, JSON.parse(JSON.stringify(list)));
+    eachTree(list) 
     this.setState(({ list }))
     let endTime = Date.now()
     console.log('-------endTime', endTime);
@@ -320,8 +304,7 @@ class Demo extends Component {
   }
   // 拆current 合并到parent
   splitCurrentAndMerge = (current, parent) => {
-    let index = parent.format.findIndex(item => item.id === current.id)
-    console.log('index', index)
+    let index = parent.format.findIndex(item => item.id === current.id) 
     current.format.forEach(item => {
       item.parentId = parent.id
     })
@@ -392,13 +375,10 @@ class Demo extends Component {
   }
   // 双击拆分内层 合并parent
   splitCore = (parent, splitId) => {
-    parent.update && parent.update()
-    console.log(parent)
+    parent.update && parent.update() 
     let newParent = JSON.parse(JSON.stringify(parent))
-    let index = parent.format.findIndex(item => item.id === splitId)
-    console.log(index);
-    let splitObj = JSON.parse(JSON.stringify(parent.format[index]))
-    console.log(444, splitObj);
+    let index = parent.format.findIndex(item => item.id === splitId) 
+    let splitObj = JSON.parse(JSON.stringify(parent.format[index])) 
 
     let len = splitObj.format.length
 
@@ -415,8 +395,7 @@ class Demo extends Component {
       item.isMerged = false
     })
     newParent.content.selectedList.splice(index, 1, ...splitObj.content.selectedList)
-
-    console.log(55555, newParent);
+ 
     return newParent;
   }
   // 双击拆分插入
@@ -459,8 +438,7 @@ class Demo extends Component {
     return [...splitObj.format]
   }
   // 拆分后插入
-  inset = (list, left, right, index) => {
-    console.log(443, left, right);
+  inset = (list, left, right, index) => { 
     if (left.length > 2) {
       left.forEach(item => {
         item.selected = false
@@ -540,8 +518,7 @@ class Demo extends Component {
     this.setState({ list })
   }
   copy = () => {
-    const result = this.formatList()
-    console.log(result);
+    const result = this.formatList() 
   }
   // 内层合并
   clickInItem = (childrenItem) => {
@@ -651,14 +628,11 @@ class Demo extends Component {
 
       // 点击内层一个的时候 暂不操作
       if (parent.format.length === 1) return;
-
-      console.log('parent', parent)
+ 
       // 父级只有两个直接返回
       if (parent.format.length === 2) {
-        parent.selected = true;
-        console.log(658, JSON.parse(JSON.stringify(parent)));
-        updateList(list, parent)
-        console.log(661, JSON.parse(JSON.stringify(list)));
+        parent.selected = true; 
+        updateList(list, parent) 
         this.setState({list})
         return;
       }  
@@ -672,10 +646,8 @@ class Demo extends Component {
       if (selectedList.length) {
         if (selectedList[0].parentId) { 
           let wrapParent = findById(list, selectedList[0].parentId)
-          if (wrapParent) {
-            console.log('点击内层清空外出选中', 645, selectedList);
-            let wrapParent = findById(list, selectedList[0].parentId)
-            console.log('wrapParent', wrapParent);
+          if (wrapParent) { 
+            let wrapParent = findById(list, selectedList[0].parentId) 
             wrapParent.format.forEach(item => {
               item.selected = false
             })
@@ -700,11 +672,9 @@ class Demo extends Component {
   mergeSelectedInside = (e) => {
     e.stopPropagation()
     let { list, parent, selectedInList } = this.state
-
-    console.log(623, parent, selectedInList);
+ 
     let res = this.merge(selectedInList)
-    res.parentId = parent.id
-    console.log('res', res);
+    res.parentId = parent.id 
     // 记录插入的位置
     let insertIndex = parent.format.findIndex(item => item.id === selectedInList[0].id)
     selectedInList.forEach(item => {
@@ -716,8 +686,7 @@ class Demo extends Component {
           parent.format.splice(delIndex, 1)
         }
       }
-    })
-    console.log(JSON.parse(JSON.stringify(parent)));
+    }) 
 
     // 更新list
     updateList(list, parent)
@@ -746,8 +715,7 @@ class Demo extends Component {
           key={item.id}
           className={`merge ${item.selected ? 'selected' : ''}`}
           onClick={(e) => {
-            e.stopPropagation()
-            console.log('merge');
+            e.stopPropagation() 
             this.clickInItem(item)
           }}
           selfid={item.id}
@@ -807,10 +775,8 @@ class Demo extends Component {
     this.setState({ showMenu: false })
   }
   clickMenuItem = (e, value) => {
-    e.stopPropagation()
-    console.log('---------------------------', value);
-    const { rightCurrent, list } = this.state
-    console.log('rightCurrent', rightCurrent);
+    e.stopPropagation() 
+    const { rightCurrent, list } = this.state 
     let index = list.findIndex(item => item.id === rightCurrent.id)
     rightCurrent.sortNum = value
     if (index !== -1) {
@@ -819,8 +785,7 @@ class Demo extends Component {
       this.closeMuen()
       return;
     }
-    let parent = findById(list, rightCurrent.parentId)
-    console.log('parent', parent);
+    let parent = findById(list, rightCurrent.parentId) 
     updateList(list, parent)
     this.setState({ list })
     this.closeMuen()
@@ -855,8 +820,7 @@ class Demo extends Component {
                   this.clickItem(item)
                 }}
                 onDoubleClick={e => {
-                  e.stopPropagation()
-                  console.log('onDoubleClick');
+                  e.stopPropagation() 
                   if (item.format) {
                     this.clickSplit(e, item)
                   }
@@ -865,10 +829,7 @@ class Demo extends Component {
                   e.stopPropagation()
                   this.onContextMenu(e, item)
                 }}
-              >
-                {
-                  // item.text
-                }
+              > 
                 {
                   this.renderDOM(item)
                 }
@@ -877,13 +838,7 @@ class Demo extends Component {
                     e.stopPropagation()
                     this.mergeSelected(e)
                   }}>合并</span>
-                }
-                {
-                  // item.hovered && item.isMerged && <span className='action split' onClick={e => this.clickSplit(e, item)}>拆分</span>
-                }
-                {
-                  // item.hovered && item.isMerged && <span className='action sort' onClick={e => this.sort(e, item)}>{item.disorder ? '无序' : '有序'}</span>
-                }
+                } 
               </div>
             ))
           }
