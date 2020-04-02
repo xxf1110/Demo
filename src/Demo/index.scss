@@ -17,8 +17,8 @@
       justify-content: flex-start;
       border: 2px solid #ccc; 
       .sortNum{
-        width: 15px;
-        height: 15px;
+        width: 14px;
+        height: 14px;
         position: absolute;
         top: 0;
         right: 0;
@@ -103,7 +103,7 @@
   }
   .content{
     padding: 10px; 
-    min-height: 300px;
+    min-height: 400px;
     max-height: 60vh;
     overflow-y: auto;
     border: 2px solid #ccc;
@@ -127,7 +127,7 @@
     }
   }
   .right{
-    position: fixed;
+    position: absolute;
     display: flex;
     flex-direction: column; 
     box-sizing: border-box;

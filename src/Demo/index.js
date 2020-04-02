@@ -23,8 +23,7 @@ function select(o, fn) {
   }
 }
 Array.prototype.update = function (index, updateObj) {
-  this[index] = updateObj
-  console.log(26)
+  this[index] = updateObj 
   return this;
 }
 
@@ -158,17 +157,16 @@ class Demo extends Component {
     }
   }
   timer = null
-  componentDidMount() {
-    document.oncontextmenu = function (e) {
-      return false;
-    }
+  componentDidMount() { 
+    this.domList.oncontextmenu =  e => false;
+    let result = this.formatList()
+    this.setState({result})
     document.addEventListener('click', this.click)
     select(document, this.selectText);
     this.clipboard = new ClipboardJS('.copy');
     this.clipboard.on('success', (e) => {
       this.openModal('拷贝成功')
-      e.clearSelection();
-
+      e.clearSelection(); 
     });
     this.clipboard.on('error', (e) => {
       this.openModal('拷贝失败')
@@ -205,8 +203,7 @@ class Demo extends Component {
     list.map(this.clickItem)
     this.mergeSelected()
   }
-  clickItem = (item) => {
-    console.log('----------1----------');
+  clickItem = (item) => { 
     let { list } = this.state
     if (list.length === 1) return;
     list = this.mapList(list, item.id)
@@ -276,6 +273,8 @@ class Demo extends Component {
   // 双击拆分内层
   onDoubleClick = (e, currentId) => {
     e.stopPropagation()
+    let startTime = Date.now()
+    console.log('-------startTime', startTime);
     const { list } = this.state
     console.log('-----------------2--------------', currentId);
     console.log('list', JSON.parse(JSON.stringify(list)));
@@ -351,6 +350,9 @@ class Demo extends Component {
     eachTree(list)
     console.log(308, JSON.parse(JSON.stringify(list)));
     this.setState(({ list }))
+    let endTime = Date.now()
+    console.log('-------endTime', endTime);
+    console.log('------------------------耗时', endTime - startTime);
     return;
 
   }
@@ -519,7 +521,7 @@ class Demo extends Component {
     } else {
       result = {
         sortNum: 1,
-        list: [...result]
+        format: [...result]
       }
     }
     return result;
@@ -674,7 +676,7 @@ class Demo extends Component {
   }
   onContextMenu = (e, current) => {
     let x = e.pageX
-    let y = e.pageY
+    let y = e.pageY 
     this.setState({
       showMenu: true,
       pageX: x,
@@ -776,7 +778,7 @@ class Demo extends Component {
 
     return (
       <div className='demo'>
-        <div className="list">
+        <div className="list" ref={e => this.domList = e}>
           {
             list.map((item, index) => (
               <div
@@ -843,7 +845,7 @@ class Demo extends Component {
         }
         {
           showMenu && (
-            <div className='right' style={{ top: pageY, left: pageX + 5 }}>
+            <div className='right' style={{ top: pageY + 5, left: pageX + 5 }}>
               <div className={`right-item ${rightCurrent.sortNum == 1 ? 'right-item-selected' : ''}`} onClick={e => this.clickMenuItem(e, 1)}>有序</div>
               <div className={`right-item ${rightCurrent.sortNum == 0 ? 'right-item-selected' : ''}`} onClick={e => this.clickMenuItem(e, 0)}>无序</div>
             </div>

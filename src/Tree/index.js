@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React  from 'react'
 import { Tree } from 'antd';
 
 const x = 3;
