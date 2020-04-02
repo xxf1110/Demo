@@ -1,7 +1,6 @@
 import React from 'react';
 import './App.css';
-import Demo from "./Demo";
-// import TreeWrap from "./Tree";
+import Demo from "./Demo"; 
 
 
 class App extends React.Component {

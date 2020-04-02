@@ -23,7 +23,7 @@ function select(o, fn) {
   }
 }
 Array.prototype.update = function (index, updateObj) {
-  this[index] = updateObj 
+  this[index] = updateObj
   return this;
 }
 
@@ -70,80 +70,8 @@ class Demo extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      list: [
-        {
-          id: 0,
-          text: '向',
-        },
-        {
-          id: 1,
-          text: '我',
-        },
-        {
-          id: 2,
-          text: '你',
-        },
-        {
-          id: 3,
-          text: '他',
-        },
-        {
-          id: 4,
-          text: '小',
-        },
-        {
-          id: 5,
-          text: '飞',
-        },
-        {
-          id: 6,
-          text: '李',
-        },
-        {
-          id: 7,
-          text: '王',
-        },
-        {
-          id: 8,
-          text: '二',
-        },
-        {
-          id: 9,
-          text: '张',
-        },
-        {
-          id: 11,
-          text: '赵',
-        },
-        {
-          id: 12,
-          text: '马',
-        },
-        {
-          id: 13,
-          text: '王',
-        },
-        {
-          id: 14,
-          text: '晓',
-        },
-        {
-          id: 15,
-          text: '三',
-        },
-        {
-          id: 16,
-          text: '二',
-        },
-        {
-          id: 17,
-          text: '五',
-        },
-        {
-          id: 18,
-          text: '六',
-        },
-      ],
+      list: [],
+      originStr: '',
       selectedList: [], // 外层选中的列表
       result: {}, // 格式化的数据 
       desc: '',
@@ -157,16 +85,17 @@ class Demo extends Component {
     }
   }
   timer = null
-  componentDidMount() { 
-    this.domList.oncontextmenu =  e => false;
+  componentDidMount() {
+    
+    this.domList.oncontextmenu = e => false;
     let result = this.formatList()
-    this.setState({result})
+    this.setState({ result })
     document.addEventListener('click', this.click)
     select(document, this.selectText);
     this.clipboard = new ClipboardJS('.copy');
     this.clipboard.on('success', (e) => {
       this.openModal('拷贝成功')
-      e.clearSelection(); 
+      e.clearSelection();
     });
     this.clipboard.on('error', (e) => {
       this.openModal('拷贝失败')
@@ -175,6 +104,18 @@ class Demo extends Component {
   componentWillUnmount() {
     document.removeEventListener('click', this.click)
   }
+  initList = () => {
+    const {originStr} = this.state
+    let list = originStr.split('').map((item, index) => {
+      return {
+        id: index,
+        text: item
+      }
+    })
+    this.setState({ list })
+  }
+
+
   click = (e) => {
     let boo = e.target.classList.contains('right-item')
     if (!boo) {
@@ -203,7 +144,7 @@ class Demo extends Component {
     list.map(this.clickItem)
     this.mergeSelected()
   }
-  clickItem = (item) => { 
+  clickItem = (item) => {
     let { list } = this.state
     if (list.length === 1) return;
     list = this.mapList(list, item.id)
@@ -540,9 +481,9 @@ class Demo extends Component {
       delete item.text
     }
     delete item.selected
-    delete item.isMerged 
+    delete item.isMerged
     delete item.left
-    delete item.right 
+    delete item.right
     if (item.format) {
       item.format = this.extend(item.format)
     }
@@ -676,7 +617,7 @@ class Demo extends Component {
   }
   onContextMenu = (e, current) => {
     let x = e.pageX
-    let y = e.pageY 
+    let y = e.pageY
     this.setState({
       showMenu: true,
       pageX: x,
@@ -772,12 +713,21 @@ class Demo extends Component {
     this.setState({ list })
     this.closeMuen()
   }
+  onChange = (e) => { 
+    this.setState({
+      originStr: e.target.value
+    })
+  }
   render() {
-    const { list, selectedList, result, desc, showModal, showMenu, pageX, pageY, rightCurrent} = this.state
+    const { list, selectedList, result, desc, showModal, showMenu, pageX, pageY, rightCurrent } = this.state
     const selectedLen = selectedList.length
 
     return (
       <div className='demo'>
+        <div className='top'>
+          <input name="words" id="words" onChange={this.onChange} placeholder='请输入初始化数据' /> 
+          <button onClick={() => this.initList()}>初始化数据</button>
+        </div>
         <div className="list" ref={e => this.domList = e}>
           {
             list.map((item, index) => (
