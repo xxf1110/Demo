@@ -582,10 +582,10 @@ class Demo extends Component {
         // 父级只有两个直接返回 
         if (!parent || !parent.format) return;
         if (parent.format.length === 2) {
-          parent.selected = true;
-          console.log(609, JSON.parse(JSON.stringify(parent)));
-          updateList(list, parent)
-          this.setState({list})
+          // parent.selected = true;
+          // console.log(609, JSON.parse(JSON.stringify(parent)));
+          // updateList(list, parent)
+          // this.setState({list})
           return;
         };
         childrenItem.selected = !childrenItem.selected
@@ -631,9 +631,9 @@ class Demo extends Component {
  
       // 父级只有两个直接返回
       if (parent.format.length === 2) {
-        parent.selected = true; 
-        updateList(list, parent) 
-        this.setState({list})
+        // parent.selected = true; 
+        // updateList(list, parent) 
+        // this.setState({list})
         return;
       }  
 
