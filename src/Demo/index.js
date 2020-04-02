@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './index.scss'
 import ClipboardJS from "clipboard";
 import $ from 'jquery'
+import random from "./random.png";
 
 function select(o, fn) {
   window.targetStart = document
@@ -27,6 +28,45 @@ Array.prototype.update = function (index, updateObj) {
   return this;
 }
 
+
+function findById(list, id) {
+  const run = (arr = [], id, res = []) => {
+    if (!arr.length) return arr;
+    let filters = arr.filter(item => item.id === id)
+    if (filters.length) {
+      return res.concat(...filters)
+    } else {
+      res = arr.map(item => {
+        if (item.format) {
+          return run(item.format, id, res)
+        }
+        return [];
+      })
+      return res;
+    }
+  }
+  let currentArr = run(list, id, [])
+  currentArr = currentArr.flat(Infinity)
+  let current = currentArr[0]
+  return current
+}
+
+function updateList(list, replace) {
+  const eachTree = (list) => {
+    list.map((item, index) => {
+      if (item.id === replace.id) {
+        list.update(index, replace)
+      } else {
+        if (item.format) {
+          eachTree(item.format)
+        }
+      }
+    })
+  }
+  eachTree(list)
+}
+
+
 class Demo extends Component {
   constructor(props) {
     super(props);
@@ -35,102 +75,94 @@ class Demo extends Component {
         {
           id: 0,
           text: '向',
-          zIndex: 0,
         },
         {
           id: 1,
           text: '我',
-          zIndex: 0,
         },
         {
           id: 2,
           text: '你',
-          zIndex: 0,
         },
         {
           id: 3,
           text: '他',
-          zIndex: 0,
         },
         {
           id: 4,
           text: '小',
-          zIndex: 0,
         },
         {
           id: 5,
           text: '飞',
-          zIndex: 0,
         },
         {
           id: 6,
           text: '李',
-          zIndex: 0,
         },
         {
           id: 7,
           text: '王',
-          zIndex: 0,
         },
         {
           id: 8,
           text: '二',
-          zIndex: 0,
         },
         {
           id: 9,
           text: '张',
-          zIndex: 0,
         },
         {
           id: 11,
           text: '赵',
-          zIndex: 0,
         },
         {
           id: 12,
           text: '马',
-          zIndex: 0,
         },
         {
           id: 13,
           text: '王',
-          zIndex: 0,
         },
         {
           id: 14,
           text: '晓',
-          zIndex: 0,
         },
         {
           id: 15,
           text: '三',
-          zIndex: 0,
         },
         {
           id: 16,
           text: '二',
-          zIndex: 0,
         },
         {
           id: 17,
           text: '五',
-          zIndex: 0,
         },
         {
           id: 18,
           text: '六',
-          zIndex: 0,
         },
       ],
-      selectedList: [], // 选中的列表
+      selectedList: [], // 外层选中的列表
       result: {}, // 格式化的数据 
       desc: '',
-      showModal: false
+      showModal: false,
+      selectedInList: [], // 内层选中的列表
+      parent: {}, //记录内层合并的父级
+      showMenu: false, //鼠标右键控制
+      pageX: 0,
+      pageY: 0,
+      rightCurrent: {} // 右键合并对象
     }
   }
   timer = null
   componentDidMount() {
+    document.oncontextmenu = function (e) {
+      return false;
+    }
+    document.addEventListener('click', this.click)
     select(document, this.selectText);
     this.clipboard = new ClipboardJS('.copy');
     this.clipboard.on('success', (e) => {
@@ -141,6 +173,15 @@ class Demo extends Component {
     this.clipboard.on('error', (e) => {
       this.openModal('拷贝失败')
     });
+  }
+  componentWillUnmount() {
+    document.removeEventListener('click', this.click)
+  }
+  click = (e) => {
+    let boo = e.target.classList.contains('right-item')
+    if (!boo) {
+      this.closeMuen()
+    }
   }
   openModal = (desc) => {
     this.setState({
@@ -165,10 +206,12 @@ class Demo extends Component {
     this.mergeSelected()
   }
   clickItem = (item) => {
+    console.log('----------1----------');
     let { list } = this.state
     if (list.length === 1) return;
     list = this.mapList(list, item.id)
     const selectedList = this.eachList(list)
+    console.log(196, selectedList);
     this.setState({
       selectedList,
       list,
@@ -231,16 +274,16 @@ class Demo extends Component {
   }
 
   // 双击拆分内层
-  onDoubleClick = (e) => {
+  onDoubleClick = (e, currentId) => {
     e.stopPropagation()
     const { list } = this.state
-    console.log(e.target.classList);
-    let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1;
-    console.log($(e.target).parent('.merge'));
-    console.log('splitId', splitId)
+    console.log('-----------------2--------------', currentId);
+    console.log('list', JSON.parse(JSON.stringify(list)));
 
-    let zIndex = ($(e.target).attr('zindex') || $(e.target).parent('.merge').attr('zindex')) * 1
-    console.log('zIndex', zIndex);
+    // let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1;
+    // console.log($(e.target).parent('.merge'));
+    // console.log('splitId', splitId)
+    let splitId = currentId
 
     let id = $(e.target).parents('.item').last().attr('selfid') * 1
     console.log('id', id);
@@ -292,7 +335,7 @@ class Demo extends Component {
       this.setState({ list })
       return;
     }
-    let cen = null // 缓存newParent的父及
+
     const eachTree = (list) => {
       list.map((item, index) => {
         if (item.id === newParent.id) {
@@ -310,56 +353,6 @@ class Demo extends Component {
     this.setState(({ list }))
     return;
 
-    // let parentArr = [prev]
-    // const run = (arr = [], splitId, res = []) => {
-    //   if (!arr.length) return arr;
-    //   let filters = arr.filter(item => item.id === splitId)
-    //   if (filters.length) {
-    //     return res.concat(...filters)
-    //   } else {
-    //     res = arr.map(item => {
-    //       if (item.format) {
-    //         return run(item.format, splitId, res)
-    //       }
-    //       return [];
-    //     })
-    //     return res;
-    //   }
-    // }
-    // parentArr = run(prev.format, splitId, [])
-
-
-
-
-
-
-    // console.log(2222222, parentArr)  
-    // if (prev.zIndex !== zIndex + 1) {
-    //   parentArr = run(prev.format, zIndex + 1, [])
-    // }
-    // parentArr = parentArr.flat(Infinity)
-    // let parent = parentArr[0]
-
-    // 合并parent 插入原list 更新
-    // let newParent = this.splitCore(parent, splitId) 
-    // let a = null
-    // const eachTree = (list) => {
-    //   list.map((item, index) => {
-    //     if (item.zIndex === newParent.zIndex && item.id === newParent.id) {
-    //       console.log(262, JSON.parse(JSON.stringify(list[index])));
-    //       // list[index] = newParent 
-    //       list.update(index, newParent)
-    //       console.log('---------a-----', JSON.parse(JSON.stringify(a))); 
-    //     } else {
-    //       if (item.format) {
-    //         a = item
-    //         eachTree(item.format)
-    //       }
-    //     }
-    //   })
-    // }
-    // eachTree(list) 
-
   }
   // 拆current 合并到parent
   splitCurrentAndMerge = (current, parent) => {
@@ -374,34 +367,16 @@ class Demo extends Component {
   // 合并
   merge = (selectedList) => {
     let len = selectedList.length
-    let zIndexes = selectedList.map(item => item.zIndex || 0)
-    let zIndex = Math.max(...zIndexes) + 1;
+    selectedList.forEach(item => {
+      item.selected = false
+    })
     let id = Date.now()
-
     let res = {
       id,
       format: [...selectedList],
       selected: false,
       isMerged: true,
-      zIndex,
-      text: (
-        <div className='merge' selfid={id} zindex={zIndex} onDoubleClick={this.onDoubleClick}>
-          {
-            selectedList.map((item, index) => {
-              return (
-                <div className='item' id={item.id} key={item.id} >{item.text}</div>
-              )
-            })
-          }
-        </div>
-      ),
-      content: {
-        className: 'merge',
-        selfid: id,
-        zIndex: zIndex,
-        onDoubleClick: this.onDoubleClick,
-        selectedList,
-      },
+      sortNum: 1,
     }
     if (len === 2) {
       res = {
@@ -472,10 +447,6 @@ class Demo extends Component {
       item.selected = false
       item.isMerged = false
     })
-
-    // let a = JSON.parse(JSON.stringify(newParent)) 
-    // newParent.content.zIndex = newParent.content.zIndex - 1
-    // newParent.zIndex = newParent.zIndex - 1
     newParent.content.selectedList.splice(index, 1, ...splitObj.content.selectedList)
 
     console.log(55555, newParent);
@@ -517,7 +488,7 @@ class Demo extends Component {
     this.setState({ list })
   }
   // 拆分 
-  split = (splitObj) => { 
+  split = (splitObj) => {
     return [...splitObj.format]
   }
   // 拆分后插入
@@ -547,7 +518,7 @@ class Demo extends Component {
       result = result.pop()
     } else {
       result = {
-        disorder: false,
+        sortNum: 1,
         list: [...result]
       }
     }
@@ -567,11 +538,9 @@ class Demo extends Component {
       delete item.text
     }
     delete item.selected
-    delete item.isMerged
-    delete item.hovered
+    delete item.isMerged 
     delete item.left
-    delete item.right
-    delete item.content
+    delete item.right 
     if (item.format) {
       item.format = this.extend(item.format)
     }
@@ -598,59 +567,212 @@ class Demo extends Component {
     const result = this.formatList()
     console.log(result);
   }
+  // 内层合并
+  clickInItem = (childrenItem) => {
+    console.log('-----------------3--------------', childrenItem);
+    let { list, selectedInList, parent } = this.state
+    let isWrap = list.findIndex(item => item.id === childrenItem.id)
+    if (isWrap !== -1) {
+      // 是最外层
+      this.clickItem(childrenItem)
+      return;
+    }
+    let index = -1
+    if (parent.format) {
+      // 缓存有父级的时候
+      index = parent.format.findIndex(item => item.id === childrenItem.id)
+      // 判断当前点击是否在原来的父级里面
+      if (index === -1) {
+        // 不在原来的父级里面 相当于第一次点击操作 需要清空之前设置状态值
+        parent.format.forEach(item => item.selected = false)
+        updateList(list, parent)
+
+        parent = findById(list, childrenItem.parentId)
+        console.log('parent', parent)
+        // 父级只有两个直接返回 
+        if (!parent || !parent.format) return;
+        if (parent.format.length === 2) return;
+
+        childrenItem.selected = !childrenItem.selected
+        selectedInList = parent.format.filter(item => item.selected)
+        // 更新list
+        updateList(list, parent)
+        // childrenItem.selected = !childrenItem.selected
+        // selectedInList = parent.format.filter(item => item.selected)
+        console.log('当前点击不在原来的父级里面');
+        this.setState({
+          list,
+          parent,
+          selectedInList,
+        })
+      } else {
+        childrenItem.selected = !childrenItem.selected
+        if (selectedInList.length === parent.format.length - 1 && childrenItem.selected) {
+          childrenItem.selected = false
+          this.openModal(`最多只能选择${parent.format.length - 1}个`)
+          return;
+        }
+        selectedInList = parent.format.filter(item => item.selected)
+        // 更新list
+        updateList(list, parent)
+
+        this.setState({
+          list,
+          parent,
+          selectedInList,
+        })
+      }
+    } else {
+      // 没有父级第一次点击 记录新的父级
+      parent = findById(list, childrenItem.parentId)
+      if (!parent) return;
+      console.log('parent', parent)
+      // 父级只有两个直接返回
+      if (parent.format.length === 2) return;
+
+      childrenItem.selected = !childrenItem.selected
+      selectedInList = parent.format.filter(item => item.selected)
+      // 更新list
+      updateList(list, parent)
+
+      this.setState({
+        list,
+        parent,
+        selectedInList,
+      })
+    }
+  }
+  mergeSelectedInside = (e) => {
+    e.stopPropagation()
+    let { list, parent, selectedInList } = this.state
+
+    console.log(623, parent, selectedInList);
+    let res = this.merge(selectedInList)
+    res.parentId = parent.id
+    console.log('res', res);
+    // 记录插入的位置
+    let insertIndex = parent.format.findIndex(item => item.id === selectedInList[0].id)
+    selectedInList.forEach(item => {
+      let delIndex = parent.format.findIndex(children => children.id === item.id)
+      if (delIndex !== -1) {
+        if (insertIndex === delIndex) {
+          parent.format.splice(delIndex, 1, res)
+        } else {
+          parent.format.splice(delIndex, 1)
+        }
+      }
+    })
+    console.log(JSON.parse(JSON.stringify(parent)));
+
+    // 更新list
+    updateList(list, parent)
+    this.setState({
+      list,
+      parent: {},
+      selectedInList: [],
+    })
+  }
+  onContextMenu = (e, current) => {
+    let x = e.pageX
+    let y = e.pageY
+    this.setState({
+      showMenu: true,
+      pageX: x,
+      pageY: y,
+      rightCurrent: current
+    })
+  }
   renderDOM = (item) => {
+    const { selectedInList } = this.state
     if (!item.format) return item.text
     const run = (item) => {
-      return <div key={item.id} className='merge' selfid={item.id} zindex={item.zIndex} onDoubleClick={this.onDoubleClick}>
-        {
-          item.format && item.format.map(children => {
-            if (children.format && children.format.length) {
-              return run(children)
-            } else {
-              return (
-                <div
-                  key={children.id}
-                  selfid={children.id}
-                  className={`item`}
-                  onClick={() => this.clickItem(children)}
-                >{children.text}</div>
-              )
-            }
-          })
-        }
-      </div>
+      return (
+        <div
+          key={item.id}
+          className={`merge ${item.selected ? 'selected' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            console.log('merge');
+            this.clickInItem(item)
+          }}
+          selfid={item.id}
+          zindex={item.zIndex}
+          onDoubleClick={e => {
+            e.stopPropagation()
+            this.onDoubleClick(e, item.id)
+          }}
+          onContextMenu={e => {
+            e.stopPropagation()
+            this.onContextMenu(e, item)
+          }}
+        >
+          {
+            !item.sortNum && <img src={random} alt="sortNum" className='sortNum' />
+          }
+          {
+            selectedInList.length >= 2 && item.selected && <span className='action merge-anction' onClick={e => {
+              e.stopPropagation()
+              this.mergeSelectedInside(e)
+            }}>合并</span>
+          }
+          {
+            item.format && item.format.map(children => {
+              if (children.format && children.format.length) {
+                return run(children)
+              } else {
+                return (
+                  <div
+                    key={children.id}
+                    selfid={children.id}
+                    className={`item ${children.selected ? 'selected' : 'item-in'}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      this.clickInItem(children)
+                    }}
+                  >
+                    {children.text}
+                    {
+                      selectedInList.length >= 2 && children.selected && <span className='action merge-anction' onClick={e => {
+                        e.stopPropagation()
+                        this.mergeSelectedInside(e)
+                      }}>合并</span>
+                    }
+                  </div>
+                )
+              }
+            })
+          }
+        </div>
+      )
     }
     let res = run(item);
-
-    // if (typeof item.text == 'string') return item.text
-    // const run = (selectedList) => {
-    //   return <div key={item.content.selfid} className={item.content.className} selfid={item.content.selfid} zindex={item.content.zIndex} onDoubleClick={this.onDoubleClick}>
-    //     {
-    //       selectedList.map(selected => {
-    //         if (selected.selectedList && selected.selectedList.length) {
-    //           return run(selected.selectedList)
-    //         } else {
-    //           return (
-    //             <div
-    //               key={selected.id}
-    //               selfid={selected.id}
-    //               className={`item`}
-    //               onClick={() => this.clickItem(selected)}
-    //             >{selected.text}</div>
-    //           )
-    //         }
-    //       })
-    //     }
-    //   </div>
-    // }
-    // let res = run(item.content.selectedList);
-    // console.log(res);
     return res
   }
+  closeMuen = () => {
+    this.setState({ showMenu: false })
+  }
+  clickMenuItem = (e, value) => {
+    e.stopPropagation()
+    console.log('---------------------------', value);
+    const { rightCurrent, list } = this.state
+    console.log('rightCurrent', rightCurrent);
+    let index = list.findIndex(item => item.id === rightCurrent.id)
+    rightCurrent.sortNum = value
+    if (index !== -1) {
+      list[index] = rightCurrent
+      this.setState({ list })
+      this.closeMuen()
+      return;
+    }
+    let parent = findById(list, rightCurrent.parentId)
+    console.log('parent', parent);
+    updateList(list, parent)
+    this.setState({ list })
+    this.closeMuen()
+  }
   render() {
-    const { list, selectedList, result, desc, showModal } = this.state
+    const { list, selectedList, result, desc, showModal, showMenu, pageX, pageY, rightCurrent} = this.state
     const selectedLen = selectedList.length
-    // console.log(999, list);
 
     return (
       <div className='demo'>
@@ -660,11 +782,26 @@ class Demo extends Component {
               <div
                 key={item.id}
                 selfid={item.id}
-                className={`item ${item.selected ? 'selected' : ''}`}
-                onMouseOver={() => this.onMouseOver(item)}
-                onMouseEnter={() => this.onMouseEnter(item)}
-                onMouseLeave={() => this.onMouseLeave(item)}
-                onClick={() => this.clickItem(item)}
+                className={`item ${!item.format && item.selected ? 'selected' : 'item-in'}`}
+                // onMouseOver={() => this.onMouseOver(item)}
+                // onMouseEnter={() => this.onMouseEnter(item)}
+                // onMouseLeave={() => this.onMouseLeave(item)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault();
+                  this.clickItem(item)
+                }}
+                onDoubleClick={e => {
+                  e.stopPropagation()
+                  console.log('onDoubleClick');
+                  if (item.format) {
+                    this.clickSplit(e, item)
+                  }
+                }}
+                onContextMenu={e => {
+                  e.stopPropagation()
+                  this.onContextMenu(e, item)
+                }}
               >
                 {
                   // item.text
@@ -673,13 +810,16 @@ class Demo extends Component {
                   this.renderDOM(item)
                 }
                 {
-                  selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => this.mergeSelected(e)}>合并</span>
+                  selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => {
+                    e.stopPropagation()
+                    this.mergeSelected(e)
+                  }}>合并</span>
                 }
                 {
-                  item.hovered && item.isMerged && <span className='action split' onClick={e => this.clickSplit(e, item)}>拆分</span>
+                  // item.hovered && item.isMerged && <span className='action split' onClick={e => this.clickSplit(e, item)}>拆分</span>
                 }
                 {
-                  item.hovered && item.isMerged && <span className='action sort' onClick={e => this.sort(e, item)}>{item.disorder ? '无序' : '有序'}</span>
+                  // item.hovered && item.isMerged && <span className='action sort' onClick={e => this.sort(e, item)}>{item.disorder ? '无序' : '有序'}</span>
                 }
               </div>
             ))
@@ -701,7 +841,14 @@ class Demo extends Component {
             </div>
           )
         }
-
+        {
+          showMenu && (
+            <div className='right' style={{ top: pageY, left: pageX + 5 }}>
+              <div className={`right-item ${rightCurrent.sortNum == 1 ? 'right-item-selected' : ''}`} onClick={e => this.clickMenuItem(e, 1)}>有序</div>
+              <div className={`right-item ${rightCurrent.sortNum == 0 ? 'right-item-selected' : ''}`} onClick={e => this.clickMenuItem(e, 0)}>无序</div>
+            </div>
+          )
+        }
       </div>
     );
   }
