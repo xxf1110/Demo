@@ -85,8 +85,8 @@ class Demo extends Component {
     }
   }
   timer = null
-  componentDidMount() {
-    
+  componentDidMount() { 
+    this.initList()
     this.domList.oncontextmenu = e => false;
     let result = this.formatList()
     this.setState({ result })
@@ -135,21 +135,22 @@ class Demo extends Component {
     }, 2000)
   }
   selectText = (txt, tar) => {
-    let startItem = $(window.targetStart).parents('.merge').last()
-    let endItem = $(tar).parents('.merge').last()
-    startItem = startItem.length ? startItem.prevObject[0] : startItem.prevObject.prevObject[0]
-    endItem = endItem.length ? endItem.prevObject[0] : endItem.prevObject.prevObject[0]
-    let { list } = this.state
-    list = list.filter(item => item.id >= $(startItem).attr('selfid') && item.id <= $(endItem).attr('selfid'))
-    list.map(this.clickItem)
-    this.mergeSelected()
+    // let startItem = $(window.targetStart).parents('.merge').last()
+    // let endItem = $(tar).parents('.merge').last()
+    // startItem = startItem.length ? startItem.prevObject[0] : startItem.prevObject.prevObject[0]
+    // endItem = endItem.length ? endItem.prevObject[0] : endItem.prevObject.prevObject[0]
+    // let { list } = this.state
+    // list = list.filter(item => item.id >= $(startItem).attr('selfid') && item.id <= $(endItem).attr('selfid'))
+    // list.map(this.clickItem)
+    // if(txt.length === 1) return;
+    // this.mergeSelected()
   }
   clickItem = (item) => {
     let { list } = this.state
     if (list.length === 1) return;
     list = this.mapList(list, item.id)
     const selectedList = this.eachList(list)
-    console.log(196, selectedList);
+    console.log(196, selectedList); 
     this.setState({
       selectedList,
       list,
@@ -159,11 +160,12 @@ class Demo extends Component {
   mergeSelected = (e) => {
     if (e) e.stopPropagation();
     let { list, selectedList } = this.state
-    if (selectedList.length >= 2) {
+    if (selectedList.length) {
       let mergeObj = this.merge(selectedList)
+      console.log(164, mergeObj);
       list = this.replace(list, mergeObj)
       list = this.delelteItem(list, mergeObj)
-    }
+    } 
     this.setState({
       list,
       selectedList: []
@@ -358,8 +360,11 @@ class Demo extends Component {
       for (let i = indexes.length - 1; i >= 0; i--) {
         list.splice(indexes[i], 1)
       }
-    } else {
-      let index = list.findIndex(item => item.id === mergeObj.right.id)
+    } else {  
+      let index = -1
+      if(mergeObj.right){
+        index = list.findIndex(item => item.id === mergeObj.right.id) 
+      }
       if (index !== -1) {
         list.splice(index, 1)
       }
@@ -415,7 +420,7 @@ class Demo extends Component {
   // 点击拆分
   clickSplit = (e, splitObj) => {
     if (e) e.stopPropagation();
-    let { list } = this.state
+    let { list } = this.state 
     list = list.map(item => {
       item.selected = false
       return { ...item }
@@ -436,16 +441,22 @@ class Demo extends Component {
   }
   // 拆分后插入
   inset = (list, left, right, index) => {
+    console.log(443, left, right);
     if (left.length > 2) {
       left.forEach(item => {
         item.selected = false
         item.selected = false
       })
       list.splice(index, 1, ...left)
-    } else {
-      left.selected = false
-      right.selected = false
-      list.splice(index, 1, left, right)
+    } else { 
+      left.selected = false 
+      if(right){
+        right.selected = false
+        list.splice(index, 1, left, right)
+      }else{
+        list.splice(index, 1, left)
+      }
+
     }
     return list;
   }
@@ -569,6 +580,10 @@ class Demo extends Component {
       // 没有父级第一次点击 记录新的父级
       parent = findById(list, childrenItem.parentId)
       if (!parent) return;
+
+      // 内层只有一个的时候
+      if(parent.format.length === 1) return;
+
       console.log('parent', parent)
       // 父级只有两个直接返回
       if (parent.format.length === 2) return;
@@ -762,7 +777,7 @@ class Demo extends Component {
                   this.renderDOM(item)
                 }
                 {
-                  selectedLen >= 2 && item.selected && <span className='action merge-anction' onClick={e => {
+                  item.selected && <span className='action merge-anction' onClick={e => {
                     e.stopPropagation()
                     this.mergeSelected(e)
                   }}>合并</span>

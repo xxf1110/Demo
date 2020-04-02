@@ -1,7 +1,8 @@
 .demo{
   width: 80%;
-  padding-bottom: 50px;
-  margin: 20px auto 0;
+  padding-top: 30px;
+  box-sizing: border-box;
+  margin: 0 auto;
   .top{
     display: flex;
     #words{
@@ -143,8 +144,7 @@
     left: 0;
     right: 0;
     text-align: center;
-    z-index: 100;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100; 
     span{ 
       padding: 6px 20px;
       border-radius: 4px;
@@ -152,6 +152,7 @@
       font-size: 14px;
       opacity: .9;
       background-color: #588fff; 
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
   }
   .right{
