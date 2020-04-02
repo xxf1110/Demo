@@ -106,7 +106,7 @@ class Demo extends Component {
   }
   initList = () => {
     const { originStr } = this.state
-    let list = originStr.split('').map((item, index) => {
+    let list = originStr.trim().split('').map((item, index) => {
       return {
         id: index,
         text: item
@@ -279,7 +279,8 @@ class Demo extends Component {
     if (prev.id === newParent.id) {
       let prevIndex = list.findIndex(item => item.id === id)
       list[prevIndex] = newParent 
-      this.setState({ list })
+      let newList = this.delParentId(list)
+      this.setState({ list: newList })
       return;
     }
 
@@ -294,14 +295,22 @@ class Demo extends Component {
         }
       })
     }
-    eachTree(list) 
-    this.setState(({ list }))
+    eachTree(list)  
+    let newList = this.delParentId(list)
+    this.setState(({ list: newList }))
     let endTime = Date.now()
     console.log('-------endTime', endTime);
     console.log('------------------------耗时', endTime - startTime);
-    return;
-
+    return; 
   }
+  // 删除delParentId
+  delParentId = (list) => {
+    let newList = list.map(item => {
+      delete item.parentId 
+      return {...item};
+    })
+    return newList;
+  } 
   // 拆current 合并到parent
   splitCurrentAndMerge = (current, parent) => {
     let index = parent.format.findIndex(item => item.id === current.id) 
@@ -431,7 +440,8 @@ class Demo extends Component {
       const [left, right] = this.split(splitObj)
       list = this.inset(list, left, right, index)
     }
-    this.setState({ list })
+    let newList = this.delParentId(list)
+    this.setState({ list: newList })
   }
   // 拆分 
   split = (splitObj) => {
@@ -583,10 +593,10 @@ class Demo extends Component {
         if (!parent || !parent.format) return;
         if (parent.format.length === 2) {
           // 此处有bug 
-          parent.selected = true;
-          console.log(609, JSON.parse(JSON.stringify(parent)));
-          updateList(list, parent)
-          this.setState({list})
+          // parent.selected = true;
+          // console.log(609, JSON.parse(JSON.stringify(parent)));
+          // updateList(list, parent)
+          // this.setState({list})
           return;
         };
         childrenItem.selected = !childrenItem.selected
@@ -633,9 +643,9 @@ class Demo extends Component {
       // 父级只有两个直接返回
       if (parent.format.length === 2) {
         // 此处有bug 
-        parent.selected = true; 
-        updateList(list, parent) 
-        this.setState({list})
+        // parent.selected = true; 
+        // updateList(list, parent) 
+        // this.setState({list})
         return;
       }  
 
@@ -792,19 +802,25 @@ class Demo extends Component {
     this.setState({ list })
     this.closeMuen()
   }
-  onChange = (e) => {
+  onChange = (e) => {  
     this.setState({
       originStr: e.target.value
-    })
+    }, this.initList) 
+  }
+  reset = () => {
+    this.setState({
+      originStr: ''
+    }, this.initList)
   }
   render() {
-    const { list, result, desc, showModal, showMenu, pageX, pageY, rightCurrent, selectedList } = this.state
+    const { list, result, desc, showModal, showMenu, pageX, pageY, rightCurrent, selectedList, originStr } = this.state
 
     return (
       <div className='demo'>
         <div className='top'>
-          <input name="words" id="words" onChange={this.onChange} placeholder='请输入初始化数据' />
+          <input name="words" id="words" value={originStr} onChange={this.onChange} placeholder='请输入初始化数据' />
           <button onClick={() => this.initList()}>初始化数据</button>
+          <button onClick={() => this.reset()}>清空</button>
         </div>
         <div className="list" ref={e => this.domList = e}>
           {
