@@ -106,7 +106,7 @@ class Demo extends Component {
   }
   initList = () => {
     const { originStr } = this.state
-    let list = originStr.trim().split('').map((item, index) => {
+    let list = originStr.trim().replace(/\s/g, '').split('').map((item, index) => {
       return {
         id: index,
         text: item
