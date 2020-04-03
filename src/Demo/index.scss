@@ -1,41 +1,64 @@
 .demo{
   width: 80%;
-  padding-top: 30px;
+  min-width: 750px;
+  padding-top: 10px;
   padding-bottom: 20px;
   box-sizing: border-box;
   margin: 0 auto;
-  .top{
-    display: flex;
-    #words{
-      flex: 1; 
-      padding-left: 5px;
-      border-radius: 4px;
-      outline: none;
-      box-shadow: none;
-    }
-    button{
-      display: flex;
-      align-items: center; 
-      padding: 5px 14px; 
-      margin-left: 20px;
-      border-radius: 4px; 
-      background-color: #fff; 
-      color: #fff;
-      border: 1px solid #189fff; 
-      cursor: pointer;
-      overflow: hidden;
-      background-color: #189fff;
-      &:last-child{
-        margin-right: 0;
+  .words-wrap{ 
+    .words-search{
+        position: sticky;
+        top: 0;
+        padding: 20px 0;
+        display: flex;  
+        align-items: center;
+        justify-content: space-between;
+        background-color: #fff;
+        z-index: 200;
+        .s-left{
+
+        }
+        .s-right{
+
+        }
       }
+  }
+  .list-item{
+    display: flex;
+    width: 100%;
+    height: 40px;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    &:last-child{
+      border-bottom: none;
     }
+    &:hover{
+      background-color: rgba(200, 200, 200, .3);
+    }
+    .item-icon{
+      width: 20px;
+      height: 20px;
+      margin-right: 15px;
+    }
+  }
+  .top{
+    display: flex; 
+    margin: 30px 0; 
   }
   .list{
     display: flex; 
     min-height: 200px;
+    max-height: 60vh;
+    padding: 20px 5px;
     align-items: center;  
     justify-content: flex-start;
     flex-wrap: wrap;
+    border: 2px solid #eee;
+    border-radius: 4px;
     .merge{
       position: relative;
       display: flex;
@@ -110,8 +133,9 @@
   }
   .action-btns{
     display: flex;
-    align-items: center;
     margin: 10px 0;
+    align-items: center;
+    justify-content: flex-end;
     .btn{
       display: flex;
       align-items: center; 
