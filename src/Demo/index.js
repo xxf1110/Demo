@@ -472,7 +472,7 @@ class Demo extends Component {
     let index = -1
 
     if (parent.format) {
-      // 缓存有父级的时候
+      // 缓存有父级的时候 
       index = parent.format.findIndex(item => item.id === childrenItem.id)
 
       // 点击内层清空外出选中 
@@ -507,20 +507,21 @@ class Demo extends Component {
         if (!parent || !parent.format) return;
         if (parent.format.length === 2) {
           // 此处有bug 
-          // parent.selected = true;
-          // console.log(609, JSON.parse(JSON.stringify(parent)));
-          // updateList(list, parent)
-          // this.setState({list})
-          return;
+          let boo = parent.format.every(child => !!child.format === false) 
+          console.log('boo', boo);
+          if(boo){
+            parent.selected = !parent.selected; 
+            updateList(list, parent)
+            this.setState({list})
+            return;
+          } 
         };
         childrenItem.selected = !childrenItem.selected
         let i = parent.format.findIndex(item => item.id === childrenItem.id)
         parent.format[i] = childrenItem
         selectedInList = parent.format.filter(item => item.selected)
         // 更新list
-        updateList(list, parent)
-        // childrenItem.selected = !childrenItem.selected
-        // selectedInList = parent.format.filter(item => item.selected)
+        updateList(list, parent) 
         console.log('当前点击不在原来的父级里面');
         this.setState({
           list,
@@ -529,11 +530,11 @@ class Demo extends Component {
         })
       } else {
         childrenItem.selected = !childrenItem.selected
-        if (selectedInList.length === parent.format.length - 1 && childrenItem.selected) {
-          childrenItem.selected = false
-          this.openModal(`最多只能选择${parent.format.length - 1}个`)
-          return;
-        }
+        // if (selectedInList.length === parent.format.length - 1 && childrenItem.selected) {
+        //   childrenItem.selected = false
+        //   this.openModal(`不能全部选中`)
+        //   return;
+        // }
         let i = parent.format.findIndex(item => item.id === childrenItem.id)
         parent.format[i] = childrenItem
         selectedInList = parent.format.filter(item => item.selected)
@@ -557,10 +558,14 @@ class Demo extends Component {
       // 父级只有两个直接返回
       if (parent.format.length === 2) {
         // 此处有bug 
-        // parent.selected = true; 
-        // updateList(list, parent) 
-        // this.setState({list})
-        return;
+        let boo = parent.format.every(child => !!child.format === false) 
+        console.log('boo', boo);
+        if(boo){ 
+          parent.selected = !parent.selected;  
+          updateList(list, parent)
+          this.setState({list})
+          return;
+        } 
       }  
 
       childrenItem.selected = !childrenItem.selected
