@@ -12,13 +12,16 @@ Array.prototype.update = function (index, updateObj) {
 
 
 function findById(list, id) {
+  let i = 0
   const run = (arr = [], id, res = []) => {
+    i++ 
     if (!arr.length) return arr;
     let filters = arr.filter(item => item.id === id)
     if (filters.length) {
       return res.concat(...filters)
     } else {
       res = arr.map(item => {
+        i++ 
         if (item.format) {
           return run(item.format, id, res)
         }
@@ -28,6 +31,7 @@ function findById(list, id) {
     }
   }
   let currentArr = run(list, id, [])
+  console.log('-----------------------', i);
   currentArr = currentArr.flat(Infinity)
   let current = currentArr[0]
   return current
@@ -188,8 +192,7 @@ class Demo extends Component {
     let id = $(e.target).parents('.item').last().attr('selfid') * 1 
 
     let prev = list.find(item => item.id === id)
-    if (prev.id === splitId) {
-      console.log(250, JSON.parse(JSON.stringify(list)))
+    if (prev.id === splitId) { 
       this.clickSplit(null, prev)
       return;
     }  
@@ -299,9 +302,9 @@ class Demo extends Component {
   // 双击拆分内层 合并parent
   splitCore = (parent, splitId) => {
     parent.update && parent.update() 
-    let newParent = JSON.parse(JSON.stringify(parent))
+    let newParent =  parent // JSON.parse(JSON.stringify(parent))
     let index = parent.format.findIndex(item => item.id === splitId) 
-    let splitObj = JSON.parse(JSON.stringify(parent.format[index])) 
+    let splitObj =  parent.format[index] // JSON.parse(JSON.stringify(parent.format[index])) 
 
     let len = splitObj.format.length
 
@@ -404,7 +407,10 @@ class Demo extends Component {
   format = () => {
     let { list } = this.state
     if (!list.length) return this.openModal('数据为空');
+    let start = Date.now()
     const result = this.formatList()
+    let end = Date.now()
+    console.log('格式化耗时---------', end - start);
     this.openModal('已格式化数据')
     this.setState({
       result,
@@ -509,10 +515,23 @@ class Demo extends Component {
           // 此处有bug 
           let boo = parent.format.every(child => !!child.format === false) 
           console.log('boo', boo);
-          if(boo){
+          if(boo){ 
+            console.log('--------------2---------------');
+            console.log('parent.selected1', parent.selected);
             parent.selected = !parent.selected; 
+            console.log('parent.selected2', parent.selected);
+            // let isWrap = list.findIndex(item => item.id === parent.id) 
+            // if(isWrap !== -1){
+            //   if(parent.selected){
+            //     selectedList.push(parent)
+            //   }else{
+            //     let index = selectedList.findIndex(item => item.id === parent.id)
+            //     index !== -1 && selectedList.splice(index, 1)
+            //   }
+            // } 
             updateList(list, parent)
             this.setState({list})
+            // this.setState({list, selectedList})
             return;
           } 
         };
@@ -540,7 +559,7 @@ class Demo extends Component {
         selectedInList = parent.format.filter(item => item.selected)
         // 更新list
         updateList(list, parent)
-        console.log(593, JSON.parse(JSON.stringify(list)));
+        console.log(593, list);
         this.setState({
           list,
           parent,
@@ -561,11 +580,23 @@ class Demo extends Component {
         let boo = parent.format.every(child => !!child.format === false) 
         console.log('boo', boo);
         if(boo){ 
+          console.log('--------------444---------------');
+          // let isWrap = list.findIndex(item => item.id === parent.id)
+          // if(isWrap !== -1){ 
+          //   if(parent.selected){
+          //     selectedList.push(parent)
+          //   }else{
+          //     let index = selectedList.findIndex(item => item.id === parent.id)
+          //     index !== -1 && selectedList.splice(index, 1)
+          //   }
+          // } 
           parent.selected = !parent.selected;  
           updateList(list, parent)
+          // this.setState({list, selectedList})
           this.setState({list})
           return;
         } 
+        
       }  
 
       childrenItem.selected = !childrenItem.selected
