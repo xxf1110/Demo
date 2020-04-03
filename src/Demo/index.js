@@ -757,7 +757,9 @@ class Demo extends Component {
                 }}
                 onContextMenu={e => {
                   e.stopPropagation()
-                  this.onContextMenu(e, item)
+                  if(item.format){
+                    this.onContextMenu(e, item)
+                  }
                 }}
               > 
                 {
