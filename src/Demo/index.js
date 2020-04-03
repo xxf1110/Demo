@@ -4,24 +4,7 @@ import ClipboardJS from "clipboard";
 import $ from 'jquery'
 import random from "./random.png";
 
-// function select(o, fn) {
-//   window.targetStart = document
-//   o.onmousedown = function (e) {
-//     var event = window.event || e;
-//     var target1 = event.srcElement ? event.srcElement : event.target;
-//     window.targetStart = target1
-//   }
-//   o.onmouseup = function (e) {
-//     var event = window.event || e;
-//     var target = event.srcElement ? event.srcElement : event.target;
-//     var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
-//     if (sText != "") {
-//       //将参数传入回调函数fn
-//       fn(sText, target);
-//     }
-
-//   }
-// }
+ 
 Array.prototype.update = function (index, updateObj) {
   this[index] = updateObj
   return this;
@@ -90,8 +73,7 @@ class Demo extends Component {
     this.domList.oncontextmenu = e => false;
     let result = this.formatList()
     this.setState({ result })
-    document.addEventListener('click', this.click)
-    // select(document, this.selectText);
+    document.addEventListener('click', this.click) 
     this.clipboard = new ClipboardJS('.copy');
     this.clipboard.on('success', (e) => {
       this.openModal('拷贝成功')
@@ -134,18 +116,7 @@ class Demo extends Component {
       })
       clearTimeout(this.timer)
     }, 2000)
-  }
-  // selectText = (txt, tar) => {
-    // let startItem = $(window.targetStart).parents('.merge').last()
-    // let endItem = $(tar).parents('.merge').last()
-    // startItem = startItem.length ? startItem.prevObject[0] : startItem.prevObject.prevObject[0]
-    // endItem = endItem.length ? endItem.prevObject[0] : endItem.prevObject.prevObject[0]
-    // let { list } = this.state
-    // list = list.filter(item => item.id >= $(startItem).attr('selfid') && item.id <= $(endItem).attr('selfid'))
-    // list.map(this.clickItem)
-    // if(txt.length === 1) return;
-    // this.mergeSelected()
-  // }
+  } 
   clickItem = (item) => {
     let { list, selectedInList } = this.state
     if (list.length === 1) return; 
@@ -184,29 +155,7 @@ class Demo extends Component {
       list,
       selectedList: []
     })
-  }
-  // 鼠标悬浮
-  // onMouseOver = (item) => {
-  //   if (!item.isMerged) return;
-  //   this.setHover(item, true)
-  // }
-  // 鼠标移入
-  // onMouseEnter = (item) => {
-  //   if (!item.isMerged) return;
-  //   this.setHover(item, true)
-  // }
-  // 鼠标移出
-  // onMouseLeave = (item) => {
-  //   if (!item.isMerged) return;
-  //   this.setHover(item, false)
-  // }
-  // 显示拆分
-  // setHover = (hoverItem, boo) => {
-  //   const { list } = this.state
-  //   let index = list.findIndex(item => item.id === hoverItem.id)
-  //   list[index].hovered = boo
-  //   this.setState({ list })
-  // }
+  } 
   // 遍历list 设置选中状态
   mapList = (list, id) => {
     list = list.map(item => {
@@ -233,8 +182,7 @@ class Demo extends Component {
     let startTime = Date.now()
     console.log('-------startTime', startTime);
     const { list } = this.state 
-
-    // let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1; 
+ 
     let splitId = currentId
 
     let id = $(e.target).parents('.item').last().attr('selfid') * 1 
@@ -244,36 +192,12 @@ class Demo extends Component {
       console.log(250, JSON.parse(JSON.stringify(list)))
       this.clickSplit(null, prev)
       return;
-    } 
-
-    // const run = (arr = [], splitId, res = []) => {
-    //   if (!arr.length) return arr;
-    //   let filters = arr.filter(item => item.id === splitId)
-    //   if (filters.length) {
-    //     return res.concat(...filters)
-    //   } else {
-    //     res = arr.map(item => {
-    //       if (item.format) {
-    //         return run(item.format, splitId, res)
-    //       }
-    //       return [];
-    //     })
-    //     return res;
-    //   }
-    // }
-    // let currentArr = [prev] 
-    // currentArr = run(prev.format, splitId, [])
-    // currentArr = currentArr.flat(Infinity)
-    // let current = currentArr[0] 
+    }  
     let current = findById(list, splitId)
     let parent = {}
     if (prev.id === current.parentId) {
       parent = prev
-    } else {
-      // let parentArr = [prev]
-      // parentArr = run(prev.format, current.parentId, [])
-      // parentArr = parentArr.flat(Infinity)
-      // parent = parentArr[0]
+    } else { 
       parent = findById(list, current.parentId)
     } 
     let newParent = this.splitCurrentAndMerge(current, parent) 
@@ -284,19 +208,7 @@ class Demo extends Component {
       this.setState({ list: newList })
       return;
     }
-
-    // const eachTree = (list) => {
-    //   list.map((item, index) => {
-    //     if (item.id === newParent.id) { 
-    //       list.update(index, newParent)
-    //     } else {
-    //       if (item.format) {
-    //         eachTree(item.format)
-    //       }
-    //     }
-    //   })
-    // }
-    // eachTree(list)  
+  
     updateList(list, newParent)
     let newList = this.delParentId(list)
     this.setState(({ list: newList }))
@@ -721,13 +633,14 @@ class Demo extends Component {
     })
   }
   renderDOM = (item) => {
-    const { selectedInList } = this.state
+    const { selectedInList, list } = this.state
     if (!item.format) return item.text
     const run = (item) => {
+      let isWrap = list.findIndex(child => child.id === item.id)
       return (
         <div
           key={item.id}
-          className={`merge ${item.selected ? 'selected' : ''}`}
+          className={`merge ${item.selected ? 'selected' : ''} ${isWrap !== -1 ? 'no-margin' : ''}`}
           onClick={(e) => {
             e.stopPropagation() 
             this.clickInItem(item)
@@ -830,10 +743,7 @@ class Demo extends Component {
               <div
                 key={item.id}
                 selfid={item.id}
-                className={`item ${!item.format && item.selected ? 'selected' : 'item-in'}`}
-                // onMouseOver={() => this.onMouseOver(item)}
-                // onMouseEnter={() => this.onMouseEnter(item)}
-                // onMouseLeave={() => this.onMouseLeave(item)}
+                className={`item ${!item.format && item.selected ? 'selected' : 'item-in'}`} 
                 onClick={(e) => {
                   e.stopPropagation()
                   e.preventDefault();
