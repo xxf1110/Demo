@@ -4,24 +4,24 @@ import ClipboardJS from "clipboard";
 import $ from 'jquery'
 import random from "./random.png";
 
-function select(o, fn) {
-  window.targetStart = document
-  o.onmousedown = function (e) {
-    var event = window.event || e;
-    var target1 = event.srcElement ? event.srcElement : event.target;
-    window.targetStart = target1
-  }
-  o.onmouseup = function (e) {
-    var event = window.event || e;
-    var target = event.srcElement ? event.srcElement : event.target;
-    var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
-    if (sText != "") {
-      //将参数传入回调函数fn
-      fn(sText, target);
-    }
+// function select(o, fn) {
+//   window.targetStart = document
+//   o.onmousedown = function (e) {
+//     var event = window.event || e;
+//     var target1 = event.srcElement ? event.srcElement : event.target;
+//     window.targetStart = target1
+//   }
+//   o.onmouseup = function (e) {
+//     var event = window.event || e;
+//     var target = event.srcElement ? event.srcElement : event.target;
+//     var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
+//     if (sText != "") {
+//       //将参数传入回调函数fn
+//       fn(sText, target);
+//     }
 
-  }
-}
+//   }
+// }
 Array.prototype.update = function (index, updateObj) {
   this[index] = updateObj
   return this;
@@ -91,7 +91,7 @@ class Demo extends Component {
     let result = this.formatList()
     this.setState({ result })
     document.addEventListener('click', this.click)
-    select(document, this.selectText);
+    // select(document, this.selectText);
     this.clipboard = new ClipboardJS('.copy');
     this.clipboard.on('success', (e) => {
       this.openModal('拷贝成功')
@@ -103,6 +103,7 @@ class Demo extends Component {
   }
   componentWillUnmount() {
     document.removeEventListener('click', this.click)
+    this.clipboard.destroy();
   }
   initList = () => {
     const { originStr } = this.state
@@ -134,7 +135,7 @@ class Demo extends Component {
       clearTimeout(this.timer)
     }, 2000)
   }
-  selectText = (txt, tar) => {
+  // selectText = (txt, tar) => {
     // let startItem = $(window.targetStart).parents('.merge').last()
     // let endItem = $(tar).parents('.merge').last()
     // startItem = startItem.length ? startItem.prevObject[0] : startItem.prevObject.prevObject[0]
@@ -144,7 +145,7 @@ class Demo extends Component {
     // list.map(this.clickItem)
     // if(txt.length === 1) return;
     // this.mergeSelected()
-  }
+  // }
   clickItem = (item) => {
     let { list, selectedInList } = this.state
     if (list.length === 1) return; 
@@ -185,27 +186,27 @@ class Demo extends Component {
     })
   }
   // 鼠标悬浮
-  onMouseOver = (item) => {
-    if (!item.isMerged) return;
-    this.setHover(item, true)
-  }
+  // onMouseOver = (item) => {
+  //   if (!item.isMerged) return;
+  //   this.setHover(item, true)
+  // }
   // 鼠标移入
-  onMouseEnter = (item) => {
-    if (!item.isMerged) return;
-    this.setHover(item, true)
-  }
+  // onMouseEnter = (item) => {
+  //   if (!item.isMerged) return;
+  //   this.setHover(item, true)
+  // }
   // 鼠标移出
-  onMouseLeave = (item) => {
-    if (!item.isMerged) return;
-    this.setHover(item, false)
-  }
+  // onMouseLeave = (item) => {
+  //   if (!item.isMerged) return;
+  //   this.setHover(item, false)
+  // }
   // 显示拆分
-  setHover = (hoverItem, boo) => {
-    const { list } = this.state
-    let index = list.findIndex(item => item.id === hoverItem.id)
-    list[index].hovered = boo
-    this.setState({ list })
-  }
+  // setHover = (hoverItem, boo) => {
+  //   const { list } = this.state
+  //   let index = list.findIndex(item => item.id === hoverItem.id)
+  //   list[index].hovered = boo
+  //   this.setState({ list })
+  // }
   // 遍历list 设置选中状态
   mapList = (list, id) => {
     list = list.map(item => {
@@ -233,9 +234,7 @@ class Demo extends Component {
     console.log('-------startTime', startTime);
     const { list } = this.state 
 
-    // let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1;
-    // console.log($(e.target).parent('.merge'));
-    // console.log('splitId', splitId)
+    // let splitId = $(e.target).parent('.merge').attr('selfid') * 1 || $(e.target).attr('selfid') * 1; 
     let splitId = currentId
 
     let id = $(e.target).parents('.item').last().attr('selfid') * 1 
@@ -247,33 +246,35 @@ class Demo extends Component {
       return;
     } 
 
-    const run = (arr = [], splitId, res = []) => {
-      if (!arr.length) return arr;
-      let filters = arr.filter(item => item.id === splitId)
-      if (filters.length) {
-        return res.concat(...filters)
-      } else {
-        res = arr.map(item => {
-          if (item.format) {
-            return run(item.format, splitId, res)
-          }
-          return [];
-        })
-        return res;
-      }
-    }
-    let currentArr = [prev]
-    currentArr = run(prev.format, splitId, [])
-    currentArr = currentArr.flat(Infinity)
-    let current = currentArr[0] 
+    // const run = (arr = [], splitId, res = []) => {
+    //   if (!arr.length) return arr;
+    //   let filters = arr.filter(item => item.id === splitId)
+    //   if (filters.length) {
+    //     return res.concat(...filters)
+    //   } else {
+    //     res = arr.map(item => {
+    //       if (item.format) {
+    //         return run(item.format, splitId, res)
+    //       }
+    //       return [];
+    //     })
+    //     return res;
+    //   }
+    // }
+    // let currentArr = [prev] 
+    // currentArr = run(prev.format, splitId, [])
+    // currentArr = currentArr.flat(Infinity)
+    // let current = currentArr[0] 
+    let current = findById(list, splitId)
     let parent = {}
     if (prev.id === current.parentId) {
       parent = prev
     } else {
-      let parentArr = [prev]
-      parentArr = run(prev.format, current.parentId, [])
-      parentArr = parentArr.flat(Infinity)
-      parent = parentArr[0]
+      // let parentArr = [prev]
+      // parentArr = run(prev.format, current.parentId, [])
+      // parentArr = parentArr.flat(Infinity)
+      // parent = parentArr[0]
+      parent = findById(list, current.parentId)
     } 
     let newParent = this.splitCurrentAndMerge(current, parent) 
     if (prev.id === newParent.id) {
@@ -284,18 +285,19 @@ class Demo extends Component {
       return;
     }
 
-    const eachTree = (list) => {
-      list.map((item, index) => {
-        if (item.id === newParent.id) { 
-          list.update(index, newParent)
-        } else {
-          if (item.format) {
-            eachTree(item.format)
-          }
-        }
-      })
-    }
-    eachTree(list)  
+    // const eachTree = (list) => {
+    //   list.map((item, index) => {
+    //     if (item.id === newParent.id) { 
+    //       list.update(index, newParent)
+    //     } else {
+    //       if (item.format) {
+    //         eachTree(item.format)
+    //       }
+    //     }
+    //   })
+    // }
+    // eachTree(list)  
+    updateList(list, newParent)
     let newList = this.delParentId(list)
     this.setState(({ list: newList }))
     let endTime = Date.now()
