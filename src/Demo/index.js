@@ -1,59 +1,50 @@
 import React, { Component } from 'react';
 import { FormOutlined } from '@ant-design/icons';
-import './index.scss'
-import ClipboardJS from "clipboard";
-import $ from 'jquery'
+import './index.scss' 
 import random from "./random.png";
-import { Input, List, Button, Pagination, } from "antd";
-const {Item} = List
+import { Input, List, Button, Pagination, Tooltip, message } from "antd";
 const { Search } = Input
 
 Array.prototype.update = function (index, updateObj) {
   this[index] = updateObj
   return this;
-}
+} 
 
-
-function findById(list, id) {
-  let i = 0
-  const run = (arr = [], id, res = []) => {
-    i++
-    if (!arr.length) return arr;
-    let filters = arr.filter(item => item.id === id)
-    if (filters.length) {
-      return res.concat(...filters)
-    } else {
-      res = arr.map(item => {
-        i++
-        if (item.format) {
-          return run(item.format, id, res)
-        }
-        return [];
-      })
-      return res;
-    }
-  }
-  let currentArr = run(list, id, [])
-  console.log('-----------------------', i);
-  currentArr = currentArr.flat(Infinity)
-  let current = currentArr[0]
-  return current
-}
-
-function updateList(list, replace) {
-  const eachTree = (list) => {
-    list.map((item, index) => {
-      if (item.id === replace.id) {
-        list.update(index, replace)
-      } else {
-        if (item.format) {
-          eachTree(item.format)
-        }
+// 通过id找树节点
+const findNodeById = (list, id) => {
+  let node = null 
+  const run = (list = [], id) => { 
+    return list.every(item => { 
+      if (item.id === id) {
+        node = { ...item }
+        return false;
       }
+      if (item.format) {
+        return run(item.format, id);
+      }
+      return true;
     })
   }
-  eachTree(list)
+  run(list, id) 
+  return node;
 }
+// 更新树
+const updateTree = (list, update) => { 
+  const run = (list = [], update) => { 
+    return list.every((item, index) => { 
+      if (item.id === update.id) {
+        list.update(index, update)
+        return false;
+      }
+      if (item.format) {
+        return run(item.format, update);
+      }
+      return true;
+    })
+  }
+  run(list, update) 
+}
+
 
 
 class Demo extends Component {
@@ -64,23 +55,19 @@ class Demo extends Component {
       originStr: '', // 原始字符串
       prevIndex: -1, // 当前点击项前一项的下标
       listData: [
-        {text: '可提供成功警告和错误等反馈信息1'},
-        {text: '可提供成功警告和错误等反馈信息2'},
-        {text: '可提供成功警告和错误等反馈信息3'}, 
-        {text: '可提供成功警告和错误等反馈信息4'}, 
-        {text: '可提供成功警告和错误等反馈信息5'}, 
-        {text: '可提供成功警告和错误等反馈信息6'}, 
-        {text: '可提供成功警告和错误等反馈信息7'}, 
-        {text: '可提供成功警告和错误等反馈信息8'}, 
-        {text: '可提供成功警告和错误等反馈信息9'}, 
-        {text: '可提供成功警告和错误等反馈信息10'},       
+        { text: '可提供成功警告和错误等反馈信息可提供1' },
+        { text: '可提供成功警告和错误等反馈信息可提供2' },
+        { text: '可提供成功警告和错误等反馈信息可提供3' },
+        { text: '可提供成功警告和错误等反馈信息可提供4' },
+        { text: '可提供成功警告和错误等反馈信息可提供5' },
+        { text: '可提供成功警告和错误等反馈信息可提供6' },
+        { text: '可提供成功警告和错误等反馈信息可提供7' },
+        { text: '可提供成功警告和错误等反馈信息可提供8' },
+        { text: '可提供成功警告和错误等反馈信息可提供9' },
+        { text: '可提供成功警告和错误等反馈信息可提供10' },
       ], // 服务端请求的列表
-      selectedList: [], // 外层选中的列表
-      result: {}, // 格式化的数据 
-      desc: '', // modal描述
-      showModal: false, // 控制显示modal
-      selectedInList: [], // 内层选中的列表
-      parent: {}, //记录内层合并的父级
+      selectedList: [], // 选中的列表
+      result: {}, // 格式化的数据    
       showMenu: false, //鼠标右键控制
       pageX: 0, // 记录右键位置
       pageY: 0, // 记录右键位置
@@ -93,25 +80,14 @@ class Demo extends Component {
     }
   }
   timer = null
-  componentDidMount() {
-    this.initList()
-    this.domList.oncontextmenu = e => false;
-    let result = this.formatList()
-    this.setState({ result })
-    document.addEventListener('click', this.click)
-    this.clipboard = new ClipboardJS('.copy');
-    this.clipboard.on('success', (e) => {
-      this.openModal('拷贝成功')
-      e.clearSelection();
-    });
-    this.clipboard.on('error', (e) => {
-      this.openModal('拷贝失败')
-    });
+  componentDidMount() { 
+    this.domList.oncontextmenu = e => false; 
+    document.addEventListener('click', this.click)  
   }
   componentWillUnmount() {
-    document.removeEventListener('click', this.click)
-    this.clipboard.destroy();
+    document.removeEventListener('click', this.click) 
   }
+  // 初始化列表
   initList = () => {
     const { originStr } = this.state
     let list = originStr.trim().replace(/\s/g, '').split('').map((item, index) => {
@@ -121,133 +97,29 @@ class Demo extends Component {
       }
     })
     this.setState({ list })
-  }
-
-
+  } 
+  // 监听页面点击事件
   click = (e) => {
     let boo = e.target.classList.contains('right-item')
     if (!boo) {
       this.closeMuen()
     }
-  }
-  openModal = (desc) => {
-    this.setState({
-      desc,
-      showModal: true,
-    })
-    this.timer = setTimeout(() => {
-      this.setState({
-        showModal: false,
-      })
-      clearTimeout(this.timer)
-    }, 2000)
-  }
-  clickItem = (item) => {
-    let { list, selectedInList } = this.state
-    if (list.length === 1) return;
-    // 点击外层内层清空选中 
-    if (selectedInList.length) {
-      let insetParent = findById(list, selectedInList[0].parentId)
-      if (insetParent) {
-        insetParent.format.forEach(item => {
-          item.selected = false
-        })
-        updateList(list, insetParent)
-        this.setState({
-          parent: {},
-          selectedInList: [],
-        })
-      }
-    }
-
-    list = this.mapList(list, item.id)
-    const selectedList = this.eachList(list)
-    this.setState({
-      selectedList,
-      list,
-    })
-  }
-  // 点击合并 
-  mergeSelected = (e) => {
-    if (e) e.stopPropagation();
-    let { list, selectedList } = this.state
-    if (selectedList.length) {
-      let mergeObj = this.merge(selectedList)
-      list = this.replace(list, mergeObj)
-      list = this.delelteItem(list, mergeObj)
-    }
-    this.setState({
-      list,
-      selectedList: []
-    })
-  }
-  // 遍历list 设置选中状态
-  mapList = (list, id) => {
-    list = list.map(item => {
-      if (item.id === id) {
-        return {
-          ...item,
-          selected: !item.selected,
-        }
-      }
-      return {
-        ...item,
-      }
-    })
-    return list;
-  }
-  // 遍历list 找出选中的 
-  eachList = (list) => {
-    return list.filter(item => item.selected)
-  }
-
-  // 双击拆分内层
-  onDoubleClick = (e, currentId) => {
-    e.stopPropagation()
-    let startTime = Date.now()
-    console.log('-------startTime', startTime);
-    const { list } = this.state
-
-    let splitId = currentId
-
-    let id = $(e.target).parents('.item').last().attr('selfid') * 1
-
-    let prev = list.find(item => item.id === id)
-    if (prev.id === splitId) {
-      this.clickSplit(null, prev)
+  } 
+  // 双击拆分
+  onDoubleClick = (current) => {
+    let { list } = this.state
+    if (!current.parentId) {
+      // 没有父级 是最外层
+      this.splitOuter(current)
       return;
     }
-    let current = findById(list, splitId)
-    let parent = {}
-    if (prev.id === current.parentId) {
-      parent = prev
-    } else {
-      parent = findById(list, current.parentId)
-    }
+    // 有父级
+    let parent = findNodeById(list, current.parentId) 
     let newParent = this.splitCurrentAndMerge(current, parent)
-    if (prev.id === newParent.id) {
-      let prevIndex = list.findIndex(item => item.id === id)
-      list[prevIndex] = newParent
-      let newList = this.delParentId(list)
-      this.setState({ list: newList })
-      return;
-    }
-
-    updateList(list, newParent)
-    let newList = this.delParentId(list)
-    this.setState(({ list: newList }))
-    let endTime = Date.now()
-    console.log('-------endTime', endTime);
-    console.log('------------------------耗时', endTime - startTime);
-    return;
-  }
-  // 删除delParentId
-  delParentId = (list) => {
-    let newList = list.map(item => {
-      delete item.parentId
-      return { ...item };
-    })
-    return newList;
+    updateTree(list, newParent) 
+    // let newList = this.delParentId(list)
+    console.log(254, this.state.selectedList)
+    this.setState(({ list}))
   }
   // 拆current 合并到parent
   splitCurrentAndMerge = (current, parent) => {
@@ -257,154 +129,86 @@ class Demo extends Component {
     })
     parent.format.splice(index, 1, ...current.format)
     return parent;
+  } 
+  // 删除delParentId
+  delParentId = (list) => {
+    let newList = list.map(item => {
+      delete item.parentId
+      return { ...item };
+    })
+    return newList;
   }
   // 合并
-  merge = (selectedList) => {
-    let len = selectedList.length
-    selectedList.forEach(item => {
-      item.selected = false
-    })
+  merge = () => {
+    let { list, selectedList } = this.state
+    if (!selectedList.length) return;
+    selectedList.sort((a, b) => a.id - b.id)
     let id = Date.now()
-    let res = {
+
+    let mergedObj = {
       id,
       format: [...selectedList],
       selected: false,
-      isMerged: true,
       sortNum: 1,
     }
-    if (len === 2) {
-      res = {
-        ...res,
-        left: selectedList[0],
-        right: selectedList[1],
-      }
+
+    if (mergedObj.format[0].parentId) {
+      let parent = findNodeById(list, mergedObj.format[0].parentId)
+      let insertIndex = parent.format.findIndex(item => item.id === mergedObj.format[0].id)
+      mergedObj.parentId = mergedObj.format[0].parentId
+      parent.format[insertIndex] = mergedObj
+      parent.format = this.deleteItem(parent.format, mergedObj)
+      updateTree(list, parent)
     } else {
-      res = {
-        ...res,
-        left: [...selectedList],
-        right: null,
-      }
+      let insertIndex = list.findIndex(item => item.id === mergedObj.format[0].id)
+      list[insertIndex] = mergedObj
+      list = this.deleteItem(list, mergedObj)
     }
-    res.format.forEach(item => {
+
+    mergedObj.format.forEach(item => {
+      item.selected = false
       item.parentId = id
     })
-    return res
-  }
-  // 将合并的对象进行替换  
-  replace = (list, mergeObj) => {
-    let index = list.findIndex(item => item.id === mergeObj.format[0].id)
-    list[index] = mergeObj
-    return list;
-  }
-  //替换后从数据中删除多余的
-  delelteItem = (list, mergeObj) => {
-    if (mergeObj.format.length > 2) {
-      let ids = mergeObj.format.map(item => item.id)
-      ids.splice(0, 1)
-      let indexes = []
-      ids.forEach(id => {
-        let index = list.findIndex(item => item.id === id)
-        indexes.push(index)
-      })
-      for (let i = indexes.length - 1; i >= 0; i--) {
-        list.splice(indexes[i], 1)
-      }
-    } else {
-      let index = -1
-      if (mergeObj.right) {
-        index = list.findIndex(item => item.id === mergeObj.right.id)
-      }
-      if (index !== -1) {
-        list.splice(index, 1)
-      }
-    }
-    return list;
-  }
-  // 双击拆分内层 合并parent
-  splitCore = (parent, splitId) => {
-    parent.update && parent.update()
-    let newParent = parent // JSON.parse(JSON.stringify(parent))
-    let index = parent.format.findIndex(item => item.id === splitId)
-    let splitObj = parent.format[index] // JSON.parse(JSON.stringify(parent.format[index])) 
-
-    let len = splitObj.format.length
-
-    if (len > 2) {
-      const left = splitObj.left
-      newParent.format.splice(index, 1, ...left)
-    } else {
-      const left = { ...splitObj.left }
-      const right = { ...splitObj.right }
-      newParent.format.splice(index, 1, left, right)
-    }
-    newParent.format.forEach(item => {
-      item.selected = false
-      item.isMerged = false
+    this.setState({
+      list,
+      selectedList: []
     })
-    newParent.content.selectedList.splice(index, 1, ...splitObj.content.selectedList)
-
-    return newParent;
   }
-  // 双击拆分插入
-
-  // 拆分后插入
-  insetParent = (parent, left, right, index) => {
-    if (left.length > 2) {
-      left.forEach(item => {
-        item.selected = false
-        item.selected = false
-      })
-      parent.format.splice(index, 1, ...left)
-    } else {
-      left.selected = false
-      right.selected = false
-      parent.format.splice(index, 1, left, right)
+  // 数据中删除多余的合并项
+  deleteItem = (list, mergeObj, insertIndex) => {
+    // 只合并一个 不需要删除直接返回list
+    if (mergeObj.format.length === 1) return list;
+    let ids = mergeObj.format.map(item => item.id)
+    ids.splice(0, 1)
+    let indexes = []
+    ids.forEach(id => {
+      let index = list.findIndex(item => item.id === id)
+      indexes.push(index)
+    })
+    for (let i = indexes.length - 1; i >= 0; i--) {
+      list.splice(indexes[i], 1)
     }
-    return parent;
-  }
-  // 点击拆分
-  clickSplit = (e, splitObj) => {
-    if (e) e.stopPropagation();
+    return list;
+  } 
+  // 点击外层拆分
+  splitOuter = (splitObj) => { 
     let { list } = this.state
     list = list.map(item => {
       item.selected = false
       return { ...item }
     })
+    console.log(479, splitObj)
+    splitObj.format.forEach(item => {
+      delete item.parentId
+    })
     const index = list.findIndex(item => item.id === splitObj.id)
-    if (splitObj.format.length > 2) {
-      const left = this.split(splitObj)
-      list = this.inset(list, left, null, index)
-    } else {
-      const [left, right] = this.split(splitObj)
-      list = this.inset(list, left, right, index)
-    }
-    let newList = this.delParentId(list)
-    this.setState({ list: newList })
-  }
-  // 拆分 
-  split = (splitObj) => {
-    return [...splitObj.format]
-  }
-  // 拆分后插入
-  inset = (list, left, right, index) => {
-    if (left.length > 2) {
-      left.forEach(item => {
-        item.selected = false
-        item.selected = false
-      })
-      list.splice(index, 1, ...left)
-    } else {
-      left.selected = false
-      if (right) {
-        right.selected = false
-        list.splice(index, 1, left, right)
-      } else {
-        list.splice(index, 1, left)
-      }
-
-    }
-    return list;
-  }
+    list.splice(index, 1, ...splitObj.format) 
+    this.setState({ 
+      list, 
+      selectedList: [] 
+    })
+  } 
+   
   // 格式化数据
   formatList = () => {
     let { list } = this.state
@@ -427,25 +231,19 @@ class Demo extends Component {
   // 点击格式化
   format = () => {
     let { list } = this.state
-    if (!list.length) return this.openModal('数据为空');
+    if (!list.length) return message.error('数据为空');
     let start = Date.now()
     const result = this.formatList()
     let end = Date.now()
-    console.log('格式化耗时---------', end - start);
-    this.openModal('已格式化数据')
+    console.log('格式化耗时---------', end - start); 
+    message.success('已格式化数据')
     this.setState({
       result,
     })
   }
   // 删除key value
-  deleteKey = (item = {}) => {
-    if (typeof item.text !== 'string') {
-      delete item.text
-    }
-    delete item.selected
-    delete item.isMerged
-    delete item.left
-    delete item.right
+  deleteKey = (item = {}) => { 
+    delete item.selected 
     if (item.format) {
       item.format = this.extend(item.format)
     }
@@ -458,227 +256,68 @@ class Demo extends Component {
       return item;
     })
     return format;
-  }
-  sort = (e, item) => {
-    e.stopPropagation()
-    if (!item.isMerged) return;
-    item.disorder = !item.disorder
-    const { list } = this.state
-    const index = list.findIndex(listItem => listItem.id === item.id)
-    list[index] = item
-    this.setState({ list })
-  }
-  copy = () => {
-    const result = this.formatList()
-  }
-  // 内层合并
-  clickInItem = (childrenItem) => {
-    console.log('-----------------3--------------', childrenItem);
-    let { list, selectedInList, selectedList, parent } = this.state
-    let isWrap = list.findIndex(item => item.id === childrenItem.id)
-    console.log('--------------isWrap------', isWrap);
-    if (isWrap !== -1) {
-      // 是最外层  
-      let wrapParent = null
-      if (selectedInList.length) {
-        wrapParent = findById(list, selectedInList[0].parentId)
-      }
-      if (wrapParent) {
-        wrapParent.format.forEach(item => {
-          item.selected = false
-        })
-        updateList(list, wrapParent)
-      }
-      this.setState({
-        list,
-        selectedInList: [],
-      })
-      this.clickItem(childrenItem)
-      return;
-    }
-    let index = -1
-
-    if (parent.format) {
-      // 缓存有父级的时候 
-      index = parent.format.findIndex(item => item.id === childrenItem.id)
-
-      // 点击内层清空外出选中 
-      if (selectedList.length) {
-        console.log('点击内层清空外出选中', 571, selectedList);
-        if (selectedList[0].parentId) {
-          let wrapParent = findById(list, selectedList[0].parentId)
-          console.log('wrapParent', wrapParent);
-          if (wrapParent) {
-            wrapParent.format.forEach(item => {
-              item.selected = false
-            })
-            updateList(list, wrapParent)
-            this.setState({
-              selectedList: [],
-            })
-          }
-        }
-        list.forEach(item => {
-          item.selected = false
-        })
-      }
-      // 判断当前点击是否在原来的父级里面
-      if (index === -1) {
-        // 不在原来的父级里面 相当于第一次点击操作 需要清空之前设置状态值
-        parent.format.forEach(item => item.selected = false)
-        updateList(list, parent)
-
-        parent = findById(list, childrenItem.parentId)
-        console.log('parent', parent)
-        // 父级只有两个直接返回 
-        if (!parent || !parent.format) return;
-        if (parent.format.length === 2) {
-          // 此处有bug 
-          let boo = parent.format.every(child => !!child.format === false)
-          console.log('boo', boo);
-          if (boo) {
-            console.log('--------------2---------------');
-            console.log('parent.selected1', parent.selected);
-            parent.selected = !parent.selected;
-            console.log('parent.selected2', parent.selected);
-            // let isWrap = list.findIndex(item => item.id === parent.id) 
-            // if(isWrap !== -1){
-            //   if(parent.selected){
-            //     selectedList.push(parent)
-            //   }else{
-            //     let index = selectedList.findIndex(item => item.id === parent.id)
-            //     index !== -1 && selectedList.splice(index, 1)
-            //   }
-            // } 
-            updateList(list, parent)
-            this.setState({ list })
-            // this.setState({list, selectedList})
-            return;
-          }
-        };
-        childrenItem.selected = !childrenItem.selected
-        let i = parent.format.findIndex(item => item.id === childrenItem.id)
-        parent.format[i] = childrenItem
-        selectedInList = parent.format.filter(item => item.selected)
-        // 更新list
-        updateList(list, parent)
-        console.log('当前点击不在原来的父级里面');
-        this.setState({
-          list,
-          parent,
-          selectedInList,
-        })
-      } else {
-        childrenItem.selected = !childrenItem.selected
-        // if (selectedInList.length === parent.format.length - 1 && childrenItem.selected) {
-        //   childrenItem.selected = false
-        //   this.openModal(`不能全部选中`)
-        //   return;
-        // }
-        let i = parent.format.findIndex(item => item.id === childrenItem.id)
-        parent.format[i] = childrenItem
-        selectedInList = parent.format.filter(item => item.selected)
-        // 更新list
-        updateList(list, parent)
-        console.log(593, list);
-        this.setState({
-          list,
-          parent,
-          selectedInList,
-        })
-      }
+  } 
+  // 点击设置选中状态
+  selectItem = (current) => {
+    let { list, selectedList } = this.state
+    current.selected = !current.selected
+    let parent = {}
+    if (!current.parentId) {
+      // 没有父级 是最最外层 
+      parent = current
     } else {
-      // 没有父级第一次点击 记录新的父级
-      parent = findById(list, childrenItem.parentId)
-      if (!parent) return;
-
-      // 点击内层一个的时候 暂不操作
-      if (parent.format.length === 1) return;
-
-      // 父级只有两个直接返回
-      if (parent.format.length === 2) {
-        // 此处有bug 
-        let boo = parent.format.every(child => !!child.format === false)
-        console.log('boo', boo);
-        if (boo) {
-          console.log('--------------444---------------');
-          // let isWrap = list.findIndex(item => item.id === parent.id)
-          // if(isWrap !== -1){ 
-          //   if(parent.selected){
-          //     selectedList.push(parent)
-          //   }else{
-          //     let index = selectedList.findIndex(item => item.id === parent.id)
-          //     index !== -1 && selectedList.splice(index, 1)
-          //   }
-          // } 
-          parent.selected = !parent.selected;
-          updateList(list, parent)
-          // this.setState({list, selectedList})
-          this.setState({ list })
-          return;
-        }
-
-      }
-
-      childrenItem.selected = !childrenItem.selected
-      selectedInList = parent.format.filter(item => item.selected)
-      // 更新list
-      updateList(list, parent)
-
-      // 点击内层清空外出选中 
-      if (selectedList.length) {
-        if (selectedList[0].parentId) {
-          let wrapParent = findById(list, selectedList[0].parentId)
-          if (wrapParent) {
-            let wrapParent = findById(list, selectedList[0].parentId)
-            wrapParent.format.forEach(item => {
-              item.selected = false
-            })
-            updateList(list, wrapParent)
-            this.setState({
-              selectedList: [],
-            })
-          }
-        }
-        list.forEach(item => {
-          item.selected = false
-        })
-      }
-
-      this.setState({
-        list,
-        parent,
-        selectedInList,
-      })
+      // 不是最外层 找父级
+      parent = findNodeById(list, current.parentId)
+      console.log(326, current)
+      console.log(327, list)
+      let index = parent.format.findIndex(item => item.id === current.id)
+      parent.format[index] = current
     }
-  }
-  mergeSelectedInside = (e) => {
-    e.stopPropagation()
-    let { list, parent, selectedInList } = this.state
-
-    let res = this.merge(selectedInList)
-    res.parentId = parent.id
-    // 记录插入的位置
-    let insertIndex = parent.format.findIndex(item => item.id === selectedInList[0].id)
-    selectedInList.forEach(item => {
-      let delIndex = parent.format.findIndex(children => children.id === item.id)
-      if (delIndex !== -1) {
-        if (insertIndex === delIndex) {
-          parent.format.splice(delIndex, 1, res)
+    updateTree(list, parent)
+    // 判断选中列表中是否有当前选中项
+    let hasIndex = selectedList.findIndex(item => item.id === current.id)
+    if (hasIndex !== -1) {
+      selectedList[hasIndex] = current
+    } else {
+      // 不在原来的列表中 进一步判断是否跟选中列表同级 
+      let flag = !selectedList.length // 没有选中的列表 判断为同级 有长度后面会继续判断  
+      if (current.parentId && selectedList.length && selectedList[0].parentId) {
+        // 都存在parentId 判断是否同级
+        flag = selectedList.some(item => item.parentId === current.parentId)
+      } else if (selectedList.length && !selectedList[0].parentId && !current.parentId) {
+        // 都不存在parentId 是最外层 是同级
+        flag = true
+      } else if (selectedList.length && selectedList[0].parentId && !current.parentId) {
+        // 有选中的列表 选中列表有父级 当前没有父级 为不同级
+        flag = false
+      } else if (selectedList.length && !selectedList[0].parentId && current.parentId) {
+        // 选中的列表没有父级为最外层 当前选中有父及时 为不同级 
+        flag = false
+      } 
+      if (flag) {
+        // 同级
+        selectedList.push(current)
+      } else {
+        // 不是同级 需要先把原来的选中改为false 不是同级选中列表一定存在被选中的 
+        if (selectedList[0].parentId) {
+          let oldParent = findNodeById(list, selectedList[0].parentId)
+          oldParent.format.forEach(item => {
+            item.selected = false
+          })
+          updateTree(list, oldParent)
         } else {
-          parent.format.splice(delIndex, 1)
+          selectedList.forEach(item => {
+            item.selected = false
+            let index = list.findIndex(child => child.id === item.id)
+            list[index] = { ...item }
+          })
         }
+        selectedList = [current]
       }
-    })
-
-    // 更新list
-    updateList(list, parent)
-    this.setState({
-      list,
-      parent: {},
-      selectedInList: [],
-    })
+    } 
+    this.setState({ list, selectedList })
   }
+  // 鼠标右键
   onContextMenu = (e, current) => {
     let x = e.pageX
     let y = e.pageY
@@ -689,8 +328,9 @@ class Demo extends Component {
       rightCurrent: current
     })
   }
+  // 渲染子节点
   renderDOM = (item) => {
-    const { selectedInList, list } = this.state
+    const { selectedList, list } = this.state
     if (!item.format) return item.text
     const run = (item) => {
       let isWrap = list.findIndex(child => child.id === item.id)
@@ -699,14 +339,14 @@ class Demo extends Component {
           key={item.id}
           className={`merge ${item.selected ? 'selected' : ''} ${isWrap !== -1 ? 'no-margin' : ''}`}
           onClick={(e) => {
-            e.stopPropagation()
-            this.clickInItem(item)
+            e.stopPropagation() 
+            this.selectItem(item)
           }}
           selfid={item.id}
           zindex={item.zIndex}
           onDoubleClick={e => {
-            e.stopPropagation()
-            this.onDoubleClick(e, item.id)
+            e.stopPropagation() 
+            this.onDoubleClick(item)
           }}
           onContextMenu={e => {
             e.stopPropagation()
@@ -717,9 +357,9 @@ class Demo extends Component {
             !item.sortNum && <img src={random} alt="sortNum" className='sortNum' />
           }
           {
-            selectedInList.length >= 2 && item.selected && <span className='action merge-anction' onClick={e => {
-              e.stopPropagation()
-              this.mergeSelectedInside(e)
+            selectedList.length !== 0 && item.selected && <span className='action merge-anction' onClick={e => {
+              e.stopPropagation() 
+              this.merge()
             }}>合并</span>
           }
           {
@@ -734,14 +374,14 @@ class Demo extends Component {
                     className={`item ${children.selected ? 'selected' : 'item-in'}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      this.clickInItem(children)
+                      this.selectItem(children) 
                     }}
                   >
                     {children.text}
                     {
-                      selectedInList.length >= 2 && children.selected && <span className='action merge-anction' onClick={e => {
-                        e.stopPropagation()
-                        this.mergeSelectedInside(e)
+                      selectedList.length !== 0 && children.selected && <span className='action merge-anction' onClick={e => {
+                        e.stopPropagation() 
+                        this.merge()
                       }}>合并</span>
                     }
                   </div>
@@ -755,9 +395,11 @@ class Demo extends Component {
     let res = run(item);
     return res
   }
+  // 关闭右键盘排序
   closeMuen = () => {
     this.setState({ showMenu: false })
   }
+  // 点击右键菜单
   clickMenuItem = (e, value) => {
     e.stopPropagation()
     const { rightCurrent, list } = this.state
@@ -769,43 +411,44 @@ class Demo extends Component {
       this.closeMuen()
       return;
     }
-    let parent = findById(list, rightCurrent.parentId)
-    updateList(list, parent)
+    let parent = findNodeById(list, rightCurrent.parentId)
+    updateTree(list, parent)
     this.setState({ list })
     this.closeMuen()
   }
+  // 改变拆分语句输入框回调
   onChange = (e) => {
     this.setState({
       originStr: e.target.value
     })
   }
-  reset = () => {
-    this.setState({
-      originStr: ''
-    }, this.initList)
-  }
-  onClickListItem = (item) => {
-    console.log(item);
-    const {listData} = this.state
+  // 点击列表的文字
+  onClickListItem = (item) => { 
+    const { listData } = this.state
     let prevIndex = listData.findIndex(child => child.text === item.text) - 1
-    console.log('prevIndex',  prevIndex); 
+    console.log('prevIndex', prevIndex);
     this.setState({
       prevIndex,
       originStr: item.text,
     }, this.initList)
   }
+  // 保存操作
   savaAction = () => {
     console.log('savaAction');
+    message.success('savaAction')
   }
+  // 点击插入文字
   insetText = () => {
     console.log('insetText');
   }
+  // 搜索框搜索
   onSearch = (value) => {
     console.log(value);
   }
+  // 分页器
   onPageChange = (page, pageSize) => {
     console.log(page, pageSize);
-    const {pagination } = this.state
+    const { pagination } = this.state
     this.setState({
       pagination: {
         ...pagination,
@@ -813,9 +456,10 @@ class Demo extends Component {
       }
     })
   }
+  // 分页器
   onShowSizeChange = (current, size) => {
     console.log(current, size);
-    const {pagination } = this.state
+    const { pagination } = this.state
     this.setState({
       pagination: {
         ...pagination,
@@ -825,20 +469,18 @@ class Demo extends Component {
     })
   }
   render() {
-    const { 
-      list, 
+    const {
+      list,
       listData, 
-      desc, 
-      showModal, 
-      showMenu, 
-      pageX, 
-      pageY, 
-      rightCurrent, 
-      selectedList, 
+      showMenu,
+      pageX,
+      pageY,
+      rightCurrent,
+      selectedList,
       originStr,
       pagination,
-    } = this.state 
-    
+    } = this.state
+
     return (
       <div className='demo'>
         <div className='words-wrap'>
@@ -855,7 +497,7 @@ class Demo extends Component {
               />
             </div>
             <div className="s-right">
-              <Pagination   
+              <Pagination
                 {...pagination}
                 showQuickJumper
                 showSizeChanger
@@ -865,35 +507,37 @@ class Demo extends Component {
             </div>
           </div>
           <div className="words-list">
-            <List   
+            <List
               style={{
                 maxHeight: '420px',
                 overflowY: 'auto'
               }}
               bordered
-              dataSource={listData} 
-              renderItem={(item, index) => ( 
-                  <div key={index} className='list-item' onClick={() => this.onClickListItem(item)}>  
-                    <div className='item-icon'> 
-                      {
-                        index === 2 && (<FormOutlined style={{color: 'orange'}} />)
-                      }
-                    </div>
-                    {item.text}
-                  </div> 
+              dataSource={listData}
+              renderItem={(item, index) => (
+                <div key={index} className='list-item' onClick={() => this.onClickListItem(item)}>
+                  <div className='item-icon'>
+                    {
+                      index === 2 && (
+                        <Tooltip title='已操作'>
+                          <FormOutlined style={{ color: 'orange' }} />
+                        </Tooltip>
+                      )
+                    }
+                  </div>
+                  {item.text}
+                </div>
               )}
             />
           </div>
         </div>
         <div className='top'>
-          <Input  
-            value={originStr} 
-            onChange={this.onChange} 
-            placeholder='初始化数据'  
+          <Input
+            value={originStr}
+            onChange={this.onChange}
+            placeholder='初始化数据'
           />
-          {/* <Button onClick={() => this.initList()}>初始化数据</Button> */}
-          {/* <Button onClick={() => this.reset()}>清空</Button> */}
-          <Button type='primary' style={{marginLeft: '20px'}} onClick={this.insetText}>插入</Button> 
+          <Button type='primary' style={{ marginLeft: '20px' }} onClick={this.insetText}>插入</Button>
         </div>
         <div className="list" ref={e => this.domList = e}>
           {
@@ -904,14 +548,12 @@ class Demo extends Component {
                 className={`item ${!item.format && item.selected ? 'selected' : 'item-in'}`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  e.preventDefault();
-                  this.clickItem(item)
+                  e.preventDefault(); 
+                  this.selectItem(item)
                 }}
                 onDoubleClick={e => {
                   e.stopPropagation()
-                  if (item.format) {
-                    this.clickSplit(e, item)
-                  }
+                  this.onDoubleClick(item)
                 }}
                 onContextMenu={e => {
                   e.stopPropagation()
@@ -925,8 +567,8 @@ class Demo extends Component {
                 }
                 {
                   item.selected && selectedList.length !== 0 && <span className='action merge-anction' onClick={e => {
-                    e.stopPropagation()
-                    this.mergeSelected(e)
+                    e.stopPropagation() 
+                    this.merge()
                   }}>合并</span>
                 }
               </div>
@@ -935,21 +577,7 @@ class Demo extends Component {
         </div>
         <div className="action-btns">
           <Button type='primary' onClick={this.savaAction}>保存</Button>
-          {/* <span className='btn' onClick={() => this.format()}>格式化数据</span>
-          <span className='btn copy' onClick={() => this.copy()} data-clipboard-text={JSON.stringify(result, (k, v) => v, 4)}>拷贝</span> */}
-        </div>
-        {/* <div className='content'>
-          <pre>
-            {JSON.stringify(result, (k, v) => v, 4)}
-          </pre>
-        </div> */}
-        {
-          showModal && (
-            <div className='modal'>
-              <span>{desc}</span>
-            </div>
-          )
-        }
+        </div> 
         {
           showMenu && (
             <div className='right' style={{ top: pageY + 5, left: pageX + 5 }}>
