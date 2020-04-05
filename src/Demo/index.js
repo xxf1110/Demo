@@ -147,8 +147,7 @@ class Demo extends Component {
   // 合并
   merge = () => {
     let { list, selectedList } = this.state
-    if (!selectedList.length) return;
-    selectedList.sort((a, b) => a.id - b.id)
+    if (!selectedList.length) return; 
     let id = Date.now() 
     let mergedObj = {
       id,
