@@ -578,8 +578,7 @@ class Demo extends Component {
           </div>
           <div className="words-list">
             <List
-              style={{
-                minHeight: '400px',
+              style={{ 
                 maxHeight: '405px',
                 overflowY: 'auto'
               }}
@@ -588,10 +587,7 @@ class Demo extends Component {
               renderItem={(item, index) => (
                 <div
                   key={index}
-                  className={`list-item 
-                    ${item.text === currentItem.text ? 'item-selected' : ''} 
-                    ${(index === listData.length - 1) && listData.length >= 10 ? 'no-border' : ''}`
-                  }
+                  className={`list-item ${item.text === currentItem.text ? 'item-selected' : ''}`}
                   onClick={() => this.onClickListItem(item)}
                 >
                   <div className='item-icon'>

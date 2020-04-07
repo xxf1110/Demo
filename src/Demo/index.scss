@@ -25,9 +25,12 @@
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    border-bottom: 1px solid #ddd; 
+    border-top: 1px solid #ddd; 
+    &:first-child{
+      border-top: none; 
+    }
     &:hover{
-      background-color: rgba(200, 200, 200, .2);
+      background-color: rgba(210, 210, 210, .2);
     }
     .item-icon, .del-con{
       display: flex;
@@ -40,12 +43,9 @@
     .text-content{
       flex: 1;
     }
-  }
-  .no-border{
-    border-bottom: none;
-  }
+  } 
   .item-selected{
-    background-color: rgba(200, 200, 200, .2);
+    background-color: rgba(210, 210, 210, .2);
   }
   .top{
     display: flex; 
