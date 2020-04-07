@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
-import { FormOutlined } from '@ant-design/icons';
+import axios from "../axios";
+import url from "../api";
+import { FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import './index.scss'
 import random from "./random.png";
-import { Input, List, Button, Pagination, Tooltip, message } from "antd";
+import { Input, List, Button, Pagination, Tooltip, message, Popconfirm, Modal } from "antd";
 const { Search } = Input
+
 
 Array.prototype.update = function (index, updateObj) {
   this[index] = updateObj
@@ -67,23 +70,10 @@ class Demo extends Component {
     super(props);
     this.state = {
       list: [], // 操作数据列表 
-      originStr: '', // 原始字符串
-      prevIndex: -1, // 当前点击项前一项的下标
+      currentItem: {}, // 当前操作对象  
       sortNum: 1, // 最外层list的排序
-      listData: [
-        { text: '可提供成功警告和错误等反馈信息可提供1' },
-        { text: '可提供成功警告和错误等反馈信息可提供2' },
-        { text: '可提供成功警告和错误等反馈信息可提供3' },
-        { text: '可提供成功警告和错误等反馈信息可提供4' },
-        { text: '可提供成功警告和错误等反馈信息可提供5' },
-        { text: '可提供成功警告和错误等反馈信息可提供6' },
-        { text: '可提供成功警告和错误等反馈信息可提供7' },
-        { text: '可提供成功警告和错误等反馈信息可提供8' },
-        { text: '可提供成功警告和错误等反馈信息可提供9' },
-        { text: '可提供成功警告和错误等反馈信息可提供10' },
-      ], // 服务端请求的列表
-      selectedList: [], // 选中的列表
-      result: {}, // 格式化的数据    
+      listData: [], // 服务端请求的列表
+      selectedList: [], // 选中的列表 
       showMenu: false, //鼠标右键控制
       pageX: 0, // 记录右键位置
       pageY: 0, // 记录右键位置
@@ -91,12 +81,15 @@ class Demo extends Component {
       pagination: {
         current: 1,
         pageSize: 10,
-        total: 20,
-      }, // 分页器 
+        total: 0,
+      }, // 分页器
+      keywords: '', // 搜索关键字 
+      insertText: '', // 插入的文本
     }
   }
   timer = null
   componentDidMount() {
+    this.getWordsList()
     this.domList.oncontextmenu = e => false;
     document.addEventListener('click', this.click)
   }
@@ -105,14 +98,21 @@ class Demo extends Component {
   }
   // 初始化列表
   initList = () => {
-    const { originStr } = this.state
-    let list = originStr.trim().replace(/\s/g, '').split('').map((item, index) => {
-      return {
-        id: Date.now() + index,
-        text: item
-      }
-    })
-    this.setState({ list })
+    let { currentItem, sortNum } = this.state
+    let list = []
+    if (currentItem.data) {
+      list = currentItem.data.format
+      sortNum = currentItem.data.sortNum
+    } else {
+      list = currentItem.text.trim().replace(/\s/g, '').split('').map((item, index) => {
+        return {
+          id: Date.now() + index,
+          text: item
+        }
+      })
+      sortNum = 1
+    }
+    this.setState({ list, sortNum })
   }
   // 监听页面点击事件
   click = (e) => {
@@ -132,7 +132,7 @@ class Demo extends Component {
     // 有父级
     let parent = findNodeById(list, current.parentId)
     let newParent = this.splitCurrentAndMerge(current, parent)
-    updateTree(list, newParent) 
+    updateTree(list, newParent)
     this.setState(({ list }))
   }
   // 拆current 合并到parent
@@ -143,18 +143,18 @@ class Demo extends Component {
     })
     parent.format.splice(index, 1, ...current.format)
     return parent;
-  } 
+  }
   // 合并
   merge = () => {
     let { list, selectedList } = this.state
-    if (!selectedList.length) return; 
-    let id = Date.now() 
+    if (!selectedList.length) return;
+    let id = Date.now()
     let mergedObj = {
       id,
       format: [...selectedList],
       selected: false,
       sortNum: 1,
-    } 
+    }
     if (mergedObj.format[0].parentId) {
       let parent = findNodeById(list, mergedObj.format[0].parentId)
       let insertIndex = parent.format.findIndex(item => item.id === mergedObj.format[0].id)
@@ -166,7 +166,7 @@ class Demo extends Component {
       let insertIndex = list.findIndex(item => item.id === mergedObj.format[0].id)
       list[insertIndex] = mergedObj
       list = this.deleteItem(list, mergedObj)
-    } 
+    }
     mergedObj.format.forEach(item => {
       item.selected = false
       item.parentId = id
@@ -177,19 +177,15 @@ class Demo extends Component {
     })
   }
   // 数据中删除多余的合并项
-  deleteItem = (list, mergeObj, insertIndex) => {
+  deleteItem = (list, mergedObj) => {
     // 只合并一个 不需要删除直接返回list
-    if (mergeObj.format.length === 1) return list;
-    let ids = mergeObj.format.map(item => item.id)
+    if (mergedObj.format.length === 1) return list;
+    let ids = mergedObj.format.map(item => item.id)
     ids.splice(0, 1)
-    let indexes = []
     ids.forEach(id => {
       let index = list.findIndex(item => item.id === id)
-      indexes.push(index)
+      list.splice(index, 1)
     })
-    for (let i = indexes.length - 1; i >= 0; i--) {
-      list.splice(indexes[i], 1)
-    }
     return list;
   }
   // 点击外层拆分
@@ -198,7 +194,7 @@ class Demo extends Component {
     list = list.map(item => {
       item.selected = false
       return { ...item }
-    }) 
+    })
     splitObj.format.forEach(item => {
       delete item.parentId
     })
@@ -209,19 +205,17 @@ class Demo extends Component {
       selectedList: []
     })
   }
-  // 格式化格式化数据
+  // 格式化数据
   format = () => {
     let { list, sortNum } = this.state
-    if (!list.length) return message.error('数据为空'); 
+    if (!list.length) return message.error('数据为空');
     let newList = JSON.parse(JSON.stringify(list))
-    newList = deleteKey(newList, ['selected']) 
-    message.success('已格式化数据')
-    this.setState({
-      result: {
-        sortNum,
-        format: newList
-      }
-    }) 
+    newList = deleteKey(newList, ['selected'])
+    let result = {
+      sortNum,
+      format: newList
+    }
+    return result;
   }
   // 点击设置选中状态
   selectItem = (current) => {
@@ -234,7 +228,7 @@ class Demo extends Component {
     } else {
       // 不是最外层 找父级
       parent = findNodeById(list, current.parentId)
-      if (!parent) return; 
+      if (!parent) return;
       let index = parent.format.findIndex(item => item.id === current.id)
       parent.format[index] = current
     }
@@ -243,7 +237,7 @@ class Demo extends Component {
     let hasIndex = selectedList.findIndex(item => item.id === current.id)
     if (hasIndex !== -1) {
       // 原来的选中列表包含了当前点击 那么此次点击一定是改为取消选中
-      selectedList.splice(hasIndex, 1) 
+      selectedList.splice(hasIndex, 1)
     } else {
       // 不在原来的列表中 进一步判断是否跟选中列表同级 
       let flag = !selectedList.length // 没有选中的列表 判断为同级 有长度后面会继续判断  
@@ -284,14 +278,14 @@ class Demo extends Component {
     this.setState({ list, selectedList })
   }
   // 鼠标右键
-  onContextMenu = (e, current) => { 
-    const {list} = this.state
-    if(!list.length) return;
+  onContextMenu = (e, current) => {
+    const { list } = this.state
+    if (!list.length) return;
     this.setState({
       pageX: e.pageX,
       pageY: e.pageY,
       showMenu: true,
-      rightCurrent: current, 
+      rightCurrent: current,
     })
   }
   // 渲染子节点
@@ -369,7 +363,7 @@ class Demo extends Component {
   clickMenuItem = (e, value) => {
     e.stopPropagation()
     const { rightCurrent, list } = this.state
-    if(!rightCurrent){
+    if (!rightCurrent) {
       this.setState({
         sortNum: value
       })
@@ -392,50 +386,153 @@ class Demo extends Component {
   // 改变拆分语句输入框回调
   onChange = (e) => {
     this.setState({
-      originStr: e.target.value
+      insertText: e.target.value
     })
   }
   // 点击列表的文字
   onClickListItem = (item) => {
-    const { listData } = this.state
-    let prevIndex = listData.findIndex(child => child.text === item.text) - 1 
     this.setState({
-      prevIndex,
-      originStr: item.text,
+      currentItem: item,
+      insertText: item.text,
     }, this.initList)
   }
   // 保存操作
-  savaAction = () => { 
-    message.success('savaAction')
+  savaAction = () => {
+    const data = this.format()
+    console.log(JSON.stringify(data, (k, v) => v, 4));
+    const { currentItem } = this.state
+    axios.put(url.editWords, {
+      data,
+      text: currentItem.text,
+    }).then(res => {
+      if (!res.data.isSuccess) return message.error('保存失败');
+      message.success('保存成功')
+      this.setState({
+        insertText: '',
+        list: [],
+        currentItem: {},
+      }, this.getWordsList)
+    })
   }
-  // 点击插入文字
-  insetText = () => {
-     
+  // 点击插入
+  insertText = () => {
+    const { insertText } = this.state
+    axios.post(url.addWords, {
+      text: insertText,
+      data: null
+    }).then(res => {
+      if (!res.data.isSuccess) return message.error('插入失败');
+      message.success('插入成功')
+      this.setState({
+        insertText: '',
+        list: [],
+        currentItem: {},
+      }, this.getWordsList)
+    })
   }
   // 搜索框搜索
   onSearch = (value) => {
-     
+    const { pagination } = this.state
+    this.setState({
+      keywords: value,
+      pagination: {
+        ...pagination,
+        current: 1,
+      },
+      list: [],
+      currentItem: {},
+      insertText: ''
+    }, this.getWordsList)
   }
   // 分页器
-  onPageChange = (page, pageSize) => { 
+  onPageChange = (page, pageSize) => {
     const { pagination } = this.state
     this.setState({
       pagination: {
         ...pagination,
         current: page
-      }
-    })
+      },
+      list: [],
+      insertText: '',
+      currentItem: {},
+    }, this.getWordsList)
   }
   // 分页器
-  onShowSizeChange = (current, size) => { 
+  onShowSizeChange = (current, size) => {
     const { pagination } = this.state
     this.setState({
       pagination: {
         ...pagination,
         current: 1,
-        pageSize: size
-      }
+        pageSize: size,
+      },
+      list: [],
+      insertText: '',
+      currentItem: {},
+    }, this.getWordsList)
+  }
+  // 获取文本列表
+  getWordsList = () => {
+    const { keywords, pagination } = this.state
+    axios.post(url.getWordsList, {
+      keyword: keywords,
+      pageSize: pagination.pageSize,
+      pageNum: pagination.current
+    }).then(res => {
+      if (!res.data.isSuccess) return message.error(res.data.errorMsg)
+      this.setState({
+        listData: res.data.data,
+        pagination: {
+          ...pagination,
+          total: res.data.pagination.totalCount * 1
+        }
+      })
     })
+  }
+  // 删除
+  delelteItem = item => {
+    const { pagination } = this.state 
+    let newCurrent = 1
+    if(pagination.current === 1){
+      newCurrent = 1
+    }else{
+      newCurrent = pagination.total % ((pagination.current - 1) * pagination.pageSize)
+    } 
+    axios.post(url.delWords, {
+      text: item.text,
+    }).then(res => {
+      if (!res.data.isSuccess) return message.error(res.data.errorMsg)
+      message.success('删除成功')
+      this.setState({
+        list: [],
+        insertText: '',
+        currentItem: {},
+        pagination: {
+          ...pagination,
+          current: newCurrent
+        }
+      }, this.getWordsList)
+    })
+  }
+  resetList = () => {
+    Modal.confirm({
+      title: '提示',
+      content: `确定重置?`,
+      okText: '确定',
+      cancelText: '取消',
+      style: {top: 200},
+      icon: <ExclamationCircleOutlined />,
+      onOk: () => {
+        const { currentItem } = this.state
+        let list = currentItem.text.trim().replace(/\s/g, '').split('').map((item, index) => {
+          return {
+            id: Date.now() + index,
+            text: item
+          }
+        })
+        this.setState({list, sortNum: 1})
+      }
+    }); 
   }
   render() {
     const {
@@ -446,9 +543,11 @@ class Demo extends Component {
       pageY,
       rightCurrent,
       selectedList,
-      originStr,
+      insertText,
       pagination,
       sortNum,
+      currentItem,
+      keywords,
     } = this.state
 
     return (
@@ -460,8 +559,11 @@ class Demo extends Component {
                 allowClear
                 style={{ width: 320 }}
                 placeholder="请输入筛选文字"
+                value={keywords}
                 onChange={e => {
-                  console.log(e.target.value);
+                  this.setState({
+                    keywords: e.target.value
+                  })
                 }}
                 onSearch={this.onSearch}
               />
@@ -479,23 +581,38 @@ class Demo extends Component {
           <div className="words-list">
             <List
               style={{
-                maxHeight: '420px',
+                minHeight: '400px',
+                maxHeight: '405px',
                 overflowY: 'auto'
               }}
               bordered
               dataSource={listData}
               renderItem={(item, index) => (
-                <div key={index} className='list-item' onClick={() => this.onClickListItem(item)}>
+                <div
+                  key={index}
+                  className={`list-item 
+                    ${item.text === currentItem.text ? 'item-selected' : ''} 
+                    ${(index === listData.length - 1) && listData.length >= 10 ? 'no-border' : ''}`
+                  }
+                  onClick={() => this.onClickListItem(item)}
+                >
                   <div className='item-icon'>
                     {
-                      index === 2 && (
+                      item.data && (
                         <Tooltip title='已操作'>
-                          <FormOutlined style={{ color: 'orange' }} />
+                          <FormOutlined style={{ color: '#52c41a' }} />
                         </Tooltip>
                       )
                     }
                   </div>
-                  {item.text}
+                  <div className='text-content'>
+                    {item.text}
+                  </div>
+                  <div className='del-con'>
+                    <Popconfirm title='确定删除？' onClick={e => e.stopPropagation()} onConfirm={() => this.delelteItem(item)}>
+                      <DeleteOutlined style={{ color: 'red' }} />
+                    </Popconfirm>
+                  </div>
                 </div>
               )}
             />
@@ -503,25 +620,25 @@ class Demo extends Component {
         </div>
         <div className='top'>
           <Input
-            value={originStr}
+            value={insertText}
             onChange={this.onChange}
             placeholder='初始化数据'
           />
-          <Button type='primary' style={{ marginLeft: '20px' }} onClick={this.insetText}>插入</Button>
+          <Button type='primary' style={{ marginLeft: '20px' }} onClick={this.insertText}>插入</Button>
         </div>
-        <div 
-          className="list" 
-          ref={e => this.domList = e} 
+        <div
+          className="list"
+          ref={e => this.domList = e}
           onContextMenu={e => {
-            e.stopPropagation() 
-            this.onContextMenu(e) 
+            e.stopPropagation()
+            this.onContextMenu(e)
           }}
         >
           {
             !sortNum && <img src={random} alt="sortNum" className='sortNum' />
           }
           {
-            list.map((item, index) => (
+            list.map(item => (
               <div
                 key={item.id}
                 selfid={item.id}
@@ -533,7 +650,9 @@ class Demo extends Component {
                 }}
                 onDoubleClick={e => {
                   e.stopPropagation()
-                  this.onDoubleClick(item)
+                  if (item.format) {
+                    this.onDoubleClick(item)
+                  }
                 }}
                 onContextMenu={e => {
                   e.stopPropagation()
@@ -546,16 +665,24 @@ class Demo extends Component {
                   this.renderDOM(item)
                 }
                 {
-                  item.selected && selectedList.length !== 0 && !item.format &&  <span className='action merge-anction' onClick={e => {
-                    e.stopPropagation()
-                    this.merge()
-                  }}>合并</span>
+                  item.selected && selectedList.length !== 0 && !item.format && (
+                    <span
+                      className='action merge-anction'
+                      onClick={e => {
+                        e.stopPropagation()
+                        this.merge()
+                      }}
+                    >合并</span>
+                  )
                 }
               </div>
             ))
           }
         </div>
         <div className="action-btns">
+          {
+            currentItem.text && <Button onClick={this.resetList} style={{ marginRight: '15px' }}>重置</Button>
+          } 
           <Button type='primary' onClick={this.savaAction}>保存</Button>
         </div>
         {

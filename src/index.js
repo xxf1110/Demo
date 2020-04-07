@@ -4,7 +4,7 @@ import './styles/index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { ConfigProvider, message } from "antd";
-import zhCN from 'antd/es/locale/zh_CN';
+import zhCN from 'antd/es/locale/zh_CN'; 
 
 message.config({
   top: 100,
