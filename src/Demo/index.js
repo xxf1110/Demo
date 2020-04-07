@@ -493,10 +493,8 @@ class Demo extends Component {
   delelteItem = item => {
     const { pagination } = this.state 
     let newCurrent = 1
-    if(pagination.current === 1){
-      newCurrent = 1
-    }else{
-      newCurrent = pagination.total % ((pagination.current - 1) * pagination.pageSize)
+    if(pagination.current !== 1){
+      newCurrent = pagination.total % ((pagination.current - 1) * pagination.pageSize) 
     } 
     axios.post(url.delWords, {
       text: item.text,
