@@ -12,6 +12,9 @@ Object.defineProperties(url, {
     },
     delWords: {
         value: '/nlp/participle/delete'
+    },
+    login: {
+        value: '/nlp/participle/login'
     }
 
 })

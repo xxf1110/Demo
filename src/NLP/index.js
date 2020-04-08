@@ -4,7 +4,7 @@ import url from "../api";
 import { FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import './index.scss'
 import random from "./random.png";
-import { Input, List, Button, Pagination, Tooltip, message, Popconfirm, Modal } from "antd";
+import { Input, List, Button, Pagination, Tooltip, message, Popconfirm, Modal, Form, } from "antd";
 const { Search } = Input
 
 
@@ -85,10 +85,18 @@ class Demo extends Component {
       }, // 分页器
       keywords: '', // 搜索关键字 
       insertText: '', // 插入的文本
+      showLogin: false, // 控制登录
     }
   }
   timer = null
   componentDidMount() {
+    let token = sessionStorage.getItem('login_data')
+    if (!token) {
+      this.setState({
+        showLogin: true
+      })
+      return;
+    }
     this.getWordsList()
     this.domList.oncontextmenu = e => false;
     document.addEventListener('click', this.click)
@@ -405,13 +413,13 @@ class Demo extends Component {
       data,
       text: currentItem.text,
     }).then(res => {
-      if (!res.data.isSuccess) return message.error('保存失败');
+      if (!res.data.isSuccess) { 
+        this.handleToken(res.data.errorCode)
+        return message.error(res.data.errorMsg);
+      }
       message.success('保存成功')
-      this.setState({
-        insertText: '',
-        list: [],
-        currentItem: {},
-      }, this.getWordsList)
+      this.resetActionData()
+      this.getWordsList() 
     })
   }
   // 点击插入
@@ -421,54 +429,48 @@ class Demo extends Component {
       text: insertText,
       data: null
     }).then(res => {
-      if (!res.data.isSuccess) return message.error('插入失败');
+      if (!res.data.isSuccess) { 
+        this.handleToken(res.data.errorCode)
+        return message.error(res.data.errorMsg);
+      }
       message.success('插入成功')
-      this.setState({
-        insertText: '',
-        list: [],
-        currentItem: {},
-      }, this.getWordsList)
+      this.resetActionData()
+      this.getWordsList() 
     })
   }
   // 搜索框搜索
   onSearch = (value) => {
     const { pagination } = this.state
+    this.resetActionData()
     this.setState({
       keywords: value,
       pagination: {
         ...pagination,
         current: 1,
-      },
-      list: [],
-      currentItem: {},
-      insertText: ''
+      }, 
     }, this.getWordsList)
   }
   // 分页器
   onPageChange = (page, pageSize) => {
     const { pagination } = this.state
+    this.resetActionData()
     this.setState({
       pagination: {
         ...pagination,
         current: page
-      },
-      list: [],
-      insertText: '',
-      currentItem: {},
+      }, 
     }, this.getWordsList)
   }
   // 分页器
   onShowSizeChange = (current, size) => {
     const { pagination } = this.state
+    this.resetActionData()
     this.setState({
       pagination: {
         ...pagination,
         current: 1,
         pageSize: size,
-      },
-      list: [],
-      insertText: '',
-      currentItem: {},
+      }, 
     }, this.getWordsList)
   }
   // 获取文本列表
@@ -479,7 +481,10 @@ class Demo extends Component {
       pageSize: pagination.pageSize,
       pageNum: pagination.current
     }).then(res => {
-      if (!res.data.isSuccess) return message.error(res.data.errorMsg)
+      if (!res.data.isSuccess) { 
+        this.handleToken(res.data.errorCode)
+        return message.error(res.data.errorMsg)
+      }
       this.setState({
         listData: res.data.data,
         pagination: {
@@ -491,20 +496,21 @@ class Demo extends Component {
   }
   // 删除
   delelteItem = item => {
-    const { pagination } = this.state 
+    const { pagination } = this.state
     let newCurrent = 1
-    if(pagination.current !== 1){
-      newCurrent = pagination.total % ((pagination.current - 1) * pagination.pageSize) 
-    } 
+    if (pagination.current !== 1) {
+      newCurrent = pagination.total % ((pagination.current - 1) * pagination.pageSize)
+    }
     axios.post(url.delWords, {
       text: item.text,
     }).then(res => {
-      if (!res.data.isSuccess) return message.error(res.data.errorMsg)
+      if (!res.data.isSuccess) { 
+        this.handleToken(res.data.errorCode)
+        return message.error(res.data.errorMsg)
+      }
       message.success('删除成功')
-      this.setState({
-        list: [],
-        insertText: '',
-        currentItem: {},
+      this.resetActionData()
+      this.setState({ 
         pagination: {
           ...pagination,
           current: newCurrent
@@ -518,7 +524,7 @@ class Demo extends Component {
       content: `确定重置?`,
       okText: '确定',
       cancelText: '取消',
-      style: {top: 200},
+      style: { top: 200 },
       icon: <ExclamationCircleOutlined />,
       onOk: () => {
         const { currentItem } = this.state
@@ -528,9 +534,48 @@ class Demo extends Component {
             text: item
           }
         })
-        this.setState({list, sortNum: 1})
+        this.setState({ list, sortNum: 1 })
       }
-    }); 
+    });
+  }
+  onFinish = (values) => {
+    console.log(values);
+    axios.post(url.login, {
+      ...values
+    }).then(res => {
+      if (!res.data.isSuccess) return message.error(res.data.errorMsg)
+      message.success('登录成功')
+      console.log(res);
+      sessionStorage.setItem('login_data', res.data.data.token)
+      this.setState({
+        showLogin: false
+      }, this.getWordsList)
+    })
+  }
+  // token 失效处理
+  handleToken = (errorCode) => {
+    if (errorCode === -3) {
+      sessionStorage.removeItem('login_data')
+      this.resetActionData()
+      this.setState({ 
+        showLogin: true, 
+        listData: [],
+        pagination: {
+          current: 1,
+          pageSize: 10,
+          total: 0,
+        },  
+        keywords: '', 
+      })
+    }
+  }
+  // 清空操作相关数据
+  resetActionData = () => {
+    this.setState({
+      list: [],
+      insertText: '',
+      currentItem: {},
+    })
   }
   render() {
     const {
@@ -546,10 +591,17 @@ class Demo extends Component {
       sortNum,
       currentItem,
       keywords,
+      showLogin,
     } = this.state
-
+    const layout = {
+      labelCol: { span: 6 },
+      wrapperCol: { span: 14 },
+    };
+    const tailLayout = {
+      wrapperCol: { offset: 6, span: 16 },
+    };
     return (
-      <div className='demo'>
+      <div className='nlp'>
         <div className='words-wrap'>
           <div className="words-search">
             <div className='s-left'>
@@ -578,7 +630,7 @@ class Demo extends Component {
           </div>
           <div className="words-list">
             <List
-              style={{ 
+              style={{
                 maxHeight: '405px',
                 overflowY: 'auto'
               }}
@@ -603,7 +655,15 @@ class Demo extends Component {
                     {item.text}
                   </div>
                   <div className='del-con'>
-                    <Popconfirm title='确定删除？' onClick={e => e.stopPropagation()} onConfirm={() => this.delelteItem(item)}>
+                    <Popconfirm
+                      title='确定删除？'
+                      onClick={e => e.stopPropagation()}
+                      onConfirm={(e) => {
+                        e.stopPropagation()
+                        this.delelteItem(item)
+                      }}
+                      onCancel={e => e.stopPropagation()}
+                    >
                       <DeleteOutlined style={{ color: 'red' }} />
                     </Popconfirm>
                   </div>
@@ -676,7 +736,7 @@ class Demo extends Component {
         <div className="action-btns">
           {
             currentItem.text && <Button onClick={this.resetList} style={{ marginRight: '15px' }}>重置</Button>
-          } 
+          }
           <Button type='primary' onClick={this.savaAction}>保存</Button>
         </div>
         {
@@ -693,6 +753,41 @@ class Demo extends Component {
             </div>
           )
         }
+        {/* 登录框 */}
+        <Modal
+          title="请登录"
+          visible={showLogin}
+          onOk={this.handleOk}
+          footer={null}
+          closable={false}
+          destroyOnClose={true}
+          keyboard={false}
+        >
+          <Form
+            {...layout}
+            name="login"
+            initialValues={{ remember: true }}
+            onFinish={this.onFinish}
+          >
+            <Form.Item
+              label="用户名"
+              name="username"
+              rules={[{ required: true, whitespace: true, message: '请输入用户名!' }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              label="密码"
+              name="password"
+              rules={[{ required: true, whitespace: true, message: '请输入密码!' }]}
+            >
+              <Input.Password />
+            </Form.Item>
+            <Form.Item {...tailLayout}>
+              <Button type="primary" htmlType="submit">登录</Button>
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
     );
   }

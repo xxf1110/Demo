@@ -1,12 +1,12 @@
 import React from 'react'; 
-import Demo from "./Demo";
+import NLP from "./NLP";
 
 
 class App extends React.Component {
   render() {
     return ( 
       <div className="App">
-        <Demo />
+        <NLP />
       </div> 
     )
   }
