@@ -1,4 +1,7 @@
 let url = {}
+let host = 'http://192.168.81.40:9000' // 线上服务器地址
+// let host = '' 
+
 
 Object.defineProperties(url, {
     getWordsList: {
@@ -15,6 +18,9 @@ Object.defineProperties(url, {
     },
     login: {
         value: '/nlp/participle/login'
+    },
+    exportData: {
+        value: host + '/nlp/participle/export'
     }
 
 })

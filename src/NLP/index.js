@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import axios from "../axios";
 import url from "../api";
-import { FormOutlined, DeleteOutlined, ExclamationCircleOutlined, LoginOutlined } from '@ant-design/icons';
+import { FormOutlined, DeleteOutlined, ExclamationCircleOutlined, LogoutOutlined } from '@ant-design/icons';
 import './index.scss'
 import random from "./random.png";
 import { Input, List, Button, Pagination, Tooltip, message, Popconfirm, Modal, Form, } from "antd";
-const { Search } = Input
+const { Search } = Input 
 
 
 Array.prototype.update = function (index, updateObj) {
@@ -66,18 +66,18 @@ const deleteKey = (list = [], keys = []) => {
 
 // 保持选中列表顺序不变
 const sortSelectedList = (list, selectedList) => {
-  let newSelectedList = []  
+  let newSelectedList = []
   list.forEach(item => {
     selectedList.forEach(selected => {
-      if(item.id === selected.id){  
+      if (item.id === selected.id) {
         newSelectedList.push(item)
       }
     })
-  })  
+  })
   return newSelectedList;
 }
 
-class Demo extends Component {
+class NLP extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -101,16 +101,16 @@ class Demo extends Component {
     }
   }
   timer = null
-  componentDidMount() { 
+  componentDidMount() {
     this.domList.oncontextmenu = e => false;
     document.addEventListener('click', this.click)
     let token = sessionStorage.getItem('login_data')
     if (!token) {
       this.setState({
         showLogin: true
-      }) 
+      })
       return;
-    }  
+    }
     this.getWordsList()
   }
   componentWillUnmount() {
@@ -167,12 +167,12 @@ class Demo extends Component {
   // 合并
   merge = () => {
     let { list, selectedList } = this.state
-    if (!selectedList.length) return;  
+    if (!selectedList.length) return;
     // 保持原来父级数组中的位置不变
-    if(selectedList[0].parentId){
+    if (selectedList[0].parentId) {
       let parent = findNodeById(list, selectedList[0].parentId)
       selectedList = sortSelectedList(parent.format, selectedList)
-    }else{
+    } else {
       selectedList = sortSelectedList(list, selectedList)
     }
     let id = Date.now()
@@ -182,7 +182,7 @@ class Demo extends Component {
       selected: false,
       sortNum: 1,
     }
-    if (mergedObj.format[0].parentId) { 
+    if (mergedObj.format[0].parentId) {
       let parent = findNodeById(list, mergedObj.format[0].parentId)
       let insertIndex = parent.format.findIndex(item => item.id === mergedObj.format[0].id)
       mergedObj.parentId = mergedObj.format[0].parentId
@@ -428,20 +428,20 @@ class Demo extends Component {
   }
   // 保存操作
   savaAction = () => {
-    const data = this.format() 
-    if(!data) return;
+    const data = this.format()
+    if (!data) return;
     const { currentItem } = this.state
     axios.put(url.editWords, {
       data,
       text: currentItem.text,
     }).then(res => {
-      if (!res.data.isSuccess) { 
+      if (!res.data.isSuccess) {
         this.handleToken(res.data.errorCode)
         return message.error(res.data.errorMsg);
       }
       message.success('保存成功')
       this.resetActionData()
-      this.getWordsList() 
+      this.getWordsList()
     })
   }
   // 点击插入
@@ -451,13 +451,13 @@ class Demo extends Component {
       text: insertText,
       data: null
     }).then(res => {
-      if (!res.data.isSuccess) { 
+      if (!res.data.isSuccess) {
         this.handleToken(res.data.errorCode)
         return message.error(res.data.errorMsg);
       }
       message.success('插入成功')
       this.resetActionData()
-      this.getWordsList() 
+      this.getWordsList()
     })
   }
   // 搜索框搜索
@@ -469,7 +469,7 @@ class Demo extends Component {
       pagination: {
         ...pagination,
         current: 1,
-      }, 
+      },
     }, this.getWordsList)
   }
   // 分页器
@@ -480,7 +480,7 @@ class Demo extends Component {
       pagination: {
         ...pagination,
         current: page
-      }, 
+      },
     }, this.getWordsList)
   }
   // 分页器
@@ -492,7 +492,7 @@ class Demo extends Component {
         ...pagination,
         current: 1,
         pageSize: size,
-      }, 
+      },
     }, this.getWordsList)
   }
   // 获取文本列表
@@ -503,7 +503,7 @@ class Demo extends Component {
       pageSize: pagination.pageSize,
       pageNum: pagination.current
     }).then(res => {
-      if (!res.data.isSuccess) { 
+      if (!res.data.isSuccess) {
         this.handleToken(res.data.errorCode)
         return message.error(res.data.errorMsg)
       }
@@ -526,13 +526,13 @@ class Demo extends Component {
     axios.post(url.delWords, {
       text: item.text,
     }).then(res => {
-      if (!res.data.isSuccess) { 
+      if (!res.data.isSuccess) {
         this.handleToken(res.data.errorCode)
         return message.error(res.data.errorMsg)
       }
       message.success('删除成功')
       this.resetActionData()
-      this.setState({ 
+      this.setState({
         pagination: {
           ...pagination,
           current: newCurrent
@@ -561,14 +561,13 @@ class Demo extends Component {
     });
   }
   onFinish = (values) => {
-    console.log(values);
     axios.post(url.login, {
       ...values
     }).then(res => {
       if (!res.data.isSuccess) return message.error(res.data.errorMsg)
-      message.success('登录成功') 
+      message.success('登录成功')
       sessionStorage.setItem('login_data', res.data.data.token)
-      sessionStorage.setItem('userinfo', JSON.stringify({username: values.username}))
+      sessionStorage.setItem('userinfo', JSON.stringify({ username: values.username }))
       this.setState({
         showLogin: false
       }, this.getWordsList)
@@ -580,15 +579,15 @@ class Demo extends Component {
       sessionStorage.removeItem('login_data')
       sessionStorage.removeItem('userinfo')
       this.resetActionData()
-      this.setState({ 
-        showLogin: true, 
+      this.setState({
+        showLogin: true,
         listData: [],
         pagination: {
           current: 1,
           pageSize: 10,
           total: 0,
-        },  
-        keywords: '', 
+        },
+        keywords: '',
       })
     }
   }
@@ -603,6 +602,13 @@ class Demo extends Component {
   // 退出
   loginOut = () => {
     this.handleToken(-3)
+  }
+  // 下载数据
+  download = () => {   
+    let token = sessionStorage.getItem('login_data')
+    if(!token) return; 
+    let action = url.exportData + '?token=' + token 
+    window.location.href = action 
   }
   render() {
     const {
@@ -627,7 +633,7 @@ class Demo extends Component {
     const tailLayout = {
       wrapperCol: { offset: 6, span: 16 },
     };
-    const userinfo = JSON.parse(sessionStorage.getItem('userinfo') || JSON.stringify({username: '请登录'})) 
+    const userinfo = JSON.parse(sessionStorage.getItem('userinfo') || JSON.stringify({ username: '请登录' }))
 
     return (
       <div className='nlp'>
@@ -636,7 +642,7 @@ class Demo extends Component {
             <div className='username'>{userinfo.username}</div>
             <div className='logout'>
               <Tooltip title="注销">
-                <LoginOutlined style={{color: '#189eff', fontSize: '16px'}} onClick={this.loginOut} />
+                <LogoutOutlined style={{ color: '#189eff', fontSize: '16px' }} onClick={this.loginOut} />
               </Tooltip>
             </div>
           </div>
@@ -646,7 +652,7 @@ class Demo extends Component {
             <div className='s-left'>
               <Search
                 allowClear
-                style={{ width: 320 }}
+                style={{ width: 320, marginRight: '15px' }}
                 placeholder="请输入筛选文字"
                 value={keywords}
                 onChange={e => {
@@ -656,6 +662,7 @@ class Demo extends Component {
                 }}
                 onSearch={this.onSearch}
               />
+              <Button type='primary' onClick={this.download}>下载数据</Button>
             </div>
             <div className="s-right">
               <Pagination
@@ -832,4 +839,4 @@ class Demo extends Component {
   }
 }
 
-export default Demo;
+export default NLP;

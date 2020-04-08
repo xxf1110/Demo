@@ -85,6 +85,7 @@
     flex-wrap: wrap;
     border: 2px solid #ddd;
     border-radius: 4px;
+    user-select: none;
     .merge{
       position: relative;
       display: flex;
