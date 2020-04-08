@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import axios from "../axios";
 import url from "../api";
-import { FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { FormOutlined, DeleteOutlined, ExclamationCircleOutlined, LoginOutlined } from '@ant-design/icons';
 import './index.scss'
 import random from "./random.png";
 import { Input, List, Button, Pagination, Tooltip, message, Popconfirm, Modal, Form, } from "antd";
@@ -64,6 +64,18 @@ const deleteKey = (list = [], keys = []) => {
   return list;
 }
 
+// 保持选中列表顺序不变
+const sortSelectedList = (list, selectedList) => {
+  let newSelectedList = []  
+  list.forEach(item => {
+    selectedList.forEach(selected => {
+      if(item.id === selected.id){  
+        newSelectedList.push(item)
+      }
+    })
+  })  
+  return newSelectedList;
+}
 
 class Demo extends Component {
   constructor(props) {
@@ -85,21 +97,21 @@ class Demo extends Component {
       }, // 分页器
       keywords: '', // 搜索关键字 
       insertText: '', // 插入的文本
-      showLogin: false, // 控制登录
+      showLogin: false, // 控制登录 
     }
   }
   timer = null
-  componentDidMount() {
+  componentDidMount() { 
+    this.domList.oncontextmenu = e => false;
+    document.addEventListener('click', this.click)
     let token = sessionStorage.getItem('login_data')
     if (!token) {
       this.setState({
         showLogin: true
-      })
+      }) 
       return;
-    }
+    }  
     this.getWordsList()
-    this.domList.oncontextmenu = e => false;
-    document.addEventListener('click', this.click)
   }
   componentWillUnmount() {
     document.removeEventListener('click', this.click)
@@ -155,7 +167,14 @@ class Demo extends Component {
   // 合并
   merge = () => {
     let { list, selectedList } = this.state
-    if (!selectedList.length) return;
+    if (!selectedList.length) return;  
+    // 保持原来父级数组中的位置不变
+    if(selectedList[0].parentId){
+      let parent = findNodeById(list, selectedList[0].parentId)
+      selectedList = sortSelectedList(parent.format, selectedList)
+    }else{
+      selectedList = sortSelectedList(list, selectedList)
+    }
     let id = Date.now()
     let mergedObj = {
       id,
@@ -163,7 +182,7 @@ class Demo extends Component {
       selected: false,
       sortNum: 1,
     }
-    if (mergedObj.format[0].parentId) {
+    if (mergedObj.format[0].parentId) { 
       let parent = findNodeById(list, mergedObj.format[0].parentId)
       let insertIndex = parent.format.findIndex(item => item.id === mergedObj.format[0].id)
       mergedObj.parentId = mergedObj.format[0].parentId
@@ -216,7 +235,10 @@ class Demo extends Component {
   // 格式化数据
   format = () => {
     let { list, sortNum } = this.state
-    if (!list.length) return message.error('数据为空');
+    if (!list.length) {
+      message.error('没有需要保存的数据');
+      return null;
+    }
     let newList = JSON.parse(JSON.stringify(list))
     newList = deleteKey(newList, ['selected'])
     let result = {
@@ -406,8 +428,8 @@ class Demo extends Component {
   }
   // 保存操作
   savaAction = () => {
-    const data = this.format()
-    console.log(JSON.stringify(data, (k, v) => v, 4));
+    const data = this.format() 
+    if(!data) return;
     const { currentItem } = this.state
     axios.put(url.editWords, {
       data,
@@ -544,9 +566,9 @@ class Demo extends Component {
       ...values
     }).then(res => {
       if (!res.data.isSuccess) return message.error(res.data.errorMsg)
-      message.success('登录成功')
-      console.log(res);
+      message.success('登录成功') 
       sessionStorage.setItem('login_data', res.data.data.token)
+      sessionStorage.setItem('userinfo', JSON.stringify({username: values.username}))
       this.setState({
         showLogin: false
       }, this.getWordsList)
@@ -556,6 +578,7 @@ class Demo extends Component {
   handleToken = (errorCode) => {
     if (errorCode === -3) {
       sessionStorage.removeItem('login_data')
+      sessionStorage.removeItem('userinfo')
       this.resetActionData()
       this.setState({ 
         showLogin: true, 
@@ -576,6 +599,10 @@ class Demo extends Component {
       insertText: '',
       currentItem: {},
     })
+  }
+  // 退出
+  loginOut = () => {
+    this.handleToken(-3)
   }
   render() {
     const {
@@ -600,8 +627,20 @@ class Demo extends Component {
     const tailLayout = {
       wrapperCol: { offset: 6, span: 16 },
     };
+    const userinfo = JSON.parse(sessionStorage.getItem('userinfo') || JSON.stringify({username: '请登录'})) 
+
     return (
       <div className='nlp'>
+        <div className='header'>
+          <div className='h-con'>
+            <div className='username'>{userinfo.username}</div>
+            <div className='logout'>
+              <Tooltip title="注销">
+                <LoginOutlined style={{color: '#189eff', fontSize: '16px'}} onClick={this.loginOut} />
+              </Tooltip>
+            </div>
+          </div>
+        </div>
         <div className='words-wrap'>
           <div className="words-search">
             <div className='s-left'>
