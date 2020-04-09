@@ -422,8 +422,7 @@ class NLP extends Component {
   // 点击列表的文字
   onClickListItem = (item) => {
     this.setState({
-      currentItem: item,
-      insertText: item.text,
+      currentItem: item, 
     }, this.initList)
   }
   // 保存操作
@@ -455,8 +454,10 @@ class NLP extends Component {
         this.handleToken(res.data.errorCode)
         return message.error(res.data.errorMsg);
       }
-      message.success('插入成功')
-      this.resetActionData()
+      message.success('插入成功') 
+      this.setState({
+        insertText: ''
+      })
       this.getWordsList()
     })
   }
@@ -594,8 +595,7 @@ class NLP extends Component {
   // 清空操作相关数据
   resetActionData = () => {
     this.setState({
-      list: [],
-      insertText: '',
+      list: [],  
       currentItem: {},
     })
   }
@@ -721,8 +721,9 @@ class NLP extends Component {
         <div className='top'>
           <Input
             value={insertText}
+            allowClear
             onChange={this.onChange}
-            placeholder='初始化数据'
+            placeholder='请输入插入数据'
           />
           <Button type='primary' style={{ marginLeft: '20px' }} onClick={this.insertText}>插入</Button>
         </div>

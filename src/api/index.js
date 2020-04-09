@@ -1,6 +1,6 @@
 let url = {}
-let host = 'http://192.168.81.40:9000' // 线上服务器地址
-// let host = '' 
+// let host = 'http://192.168.81.40:9000'
+let host = 'http://192.168.0.202:9090'  // 线上服务器地址
 
 
 Object.defineProperties(url, {
