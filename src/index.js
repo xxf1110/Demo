@@ -1,13 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import './styles/index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import { ConfigProvider, message } from "antd";
+import zhCN from 'antd/es/locale/zh_CN'; 
+
+message.config({
+  top: 100,
+  duration: 2,
+  maxCount: 1,
+});
 
 ReactDOM.render(
-  <React.StrictMode>
+  <ConfigProvider locale={zhCN}>
     <App />
-  </React.StrictMode>,
+  </ConfigProvider>,
   document.getElementById('root')
 );
 
